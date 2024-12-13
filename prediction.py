@@ -1,8 +1,16 @@
+import os
+import re
 import pandas as pd
 import numpy as np
+from rdkit import Chem
+from rdkit.Chem import Descriptors
+from mordred import Calculator, descriptors
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import mean_absolute_error, mean_squared_error
 import matplotlib.pyplot as plt
+from xgboost import XGBRegressor
 
 # Constants
 constants = {
@@ -17,97 +25,121 @@ constants = {
     "Eredox_iodide": -4.80,
 }
 
-# Step 1: Load the Dataset
-input_file = "dyes_data_PBE.xlsx"  # Replace with your actual file path
+# Step 1: Extract Data from DFT Outputs
+patterns = {
+    'HOMO': r"Energy of Highest Occupied Molecular Orbital:\s+[-\d.]+Ha\s+([-\d.]+)eV",
+    'LUMO': r"Energy of Lowest Unoccupied Molecular Orbital:\s+[-\d.]+Ha\s+([-\d.]+)eV",
+    'Dipole_Moment': r"dipole magnitude:\s+[-\d.]+\s+au\s+([-\d.]+)\s+debye"
+}
+cosmo_patterns = {
+    'Total_Energy_Hartree': r"Total energy\s*=\s*([-?\d.]+)",
+    'Solvation_Energy_eV': r"Dielectric \(solvation\) energy\s+=\s+[-\d.]+\s+([-\d.]+)", 
+    'Surface_Area_A2': r"Surface area of cavity \[A\*\*2\]\s*=\s+([-\d.]+)",
+    'Molecular_Volume_A3': r"Total Volume of cavity \[A\*\*3\]\s*=\s+([-\d.]+)",
+    'COSMO_Screening_Charge': r"cosmo\s*=\s*([-\d.]+)"
+}
+excitation_pattern = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
+
+output_dir = './outputs_LDA'
+data = []
+
+for filename in os.listdir(output_dir):
+    if filename.endswith('.txt'):
+        file_path = os.path.join(output_dir, filename)
+        record = {'File': filename}
+
+        with open(file_path, 'r') as file:
+            content = file.read()
+
+            for key, pattern in patterns.items():
+                matches = re.findall(pattern, content)
+                record[key] = float(matches[-1]) if matches else None
+
+            for key, pattern in cosmo_patterns.items():
+                matches = re.findall(pattern, content)
+                record[key] = float(matches[-1]) if matches else None
+
+            excitations = re.findall(excitation_pattern, content)
+            if excitations:
+                max_excitation = max([(float(ex[0]), float(ex[1]), float(ex[2])) for ex in excitations], key=lambda x: x[2])
+                record['Max_Absorption_nm'] = max_excitation[1]
+                record['Max_f_osc'] = max_excitation[2]
+            else:
+                record['Max_Absorption_nm'] = None
+                record['Max_f_osc'] = None
+
+        data.append(record)
+
+# Step 2: Read Molecular Files and Calculate Descriptors
+mol_dir = './mol_LDA'
+calc = Calculator(descriptors, ignore_3D=True)
+
+for filename in os.listdir(mol_dir):
+    if filename.endswith('.mol'):
+        file_path = os.path.join(mol_dir, filename)
+        mol = Chem.MolFromMolFile(file_path, sanitize=True)
+        if mol:
+            record = {desc[0]: desc[1] for desc in calc(mol).items()}
+            record['Mass'] = Descriptors.ExactMolWt(mol)
+            record['File'] = filename
+            data.append(record)
+
+# Save Extracted Data
+df = pd.DataFrame(data)
+df.to_excel('dyes_data_PBE.xlsx', index=False)
+
+# Step 3: Load Dataset
+input_file = "dyes_data_PBE.xlsx"
 data = pd.read_excel(input_file)
 
-# Validate required columns
-required_columns = [
-    'E_HOMO', 'E_LUMO', 'oscillator_strength', 'mass', 'expPCE', 
-    'dipole_moment', 'solvation_energy_eV', 'surface_area_A2', 'molecular_volume_A3'
-]
-missing_columns = [col for col in required_columns if col not in data.columns]
-if missing_columns:
-    raise ValueError(f"Missing required columns: {missing_columns}")
-
-# Handle missing data for numeric columns only
+# Handle Missing Data
 numeric_columns = data.select_dtypes(include=[np.number]).columns
 data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
 
-# Step 2: Calculate Descriptors
+# Step 4: Calculate Descriptors
 def calculate_descriptors(data, constants):
-    data['deltaE_LCB'] = data['E_LUMO'] - constants['ECB_TiO2']
-    data['deltaE_RedOxH'] = constants['Eredox_iodide'] - data['E_HOMO']
-    data['deltaE_HL'] = data['E_LUMO'] - data['E_HOMO']
-    data['IP'] = -data['E_HOMO']
-    data['EA'] = -data['E_LUMO']
+    data['deltaE_LCB'] = data['LUMO'] - constants['ECB_TiO2']
+    data['deltaE_RedOxH'] = constants['Eredox_iodide'] - data['HOMO']
+    data['deltaE_HL'] = data['LUMO'] - data['HOMO']
+    data['IP'] = -data['HOMO']
+    data['EA'] = -data['LUMO']
     data['elnChemPot'] = (-1 / 2) * (data['IP'] + data['EA'])
     data['chemHardness'] = (1 / 2) * (data['IP'] - data['EA'])
     data['electronegativity'] = -data['elnChemPot']
     data['electrophilicityIndex'] = data['elnChemPot'] ** 2 / data['chemHardness']
     data['electroacceptingPower'] = ((data['IP'] + 3 * data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
     data['electrodonatingPower'] = ((3 * data['IP'] + data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
-    data['LHE'] = (1 - 10 ** -data['oscillator_strength']) * 100
+    data['LHE'] = (1 - 10 ** -data['Max_f_osc']) * 100
     return data
 
 data = calculate_descriptors(data, constants)
 
-# Step 3: Define Features and Target for Training
+# Step 5: Define Features and Target for Ranking
 features = [
     'deltaE_LCB', 'deltaE_RedOxH', 'deltaE_HL', 'IP', 'EA', 
     'elnChemPot', 'chemHardness', 'electronegativity', 
     'electrophilicityIndex', 'electroacceptingPower', 'electrodonatingPower', 'LHE', 
-    'dipole_moment', 'solvation_energy_eV', 'surface_area_A2', 'molecular_volume_A3'
+    'Dipole_Moment', 'Solvation_Energy_eV', 'Surface_Area_A2', 'Molecular_Volume_A3', 'Mass'
 ]
-target = 'expPCE'  # Experimental PCE for training
 
 X = data[features]
-y = data[target]
 
-# Step 4: Train-Test Split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+# Normalize Features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
 
-# Track indices for labeling
-train_indices = X_train.index
-test_indices = X_test.index
+# Step 6: Train-Test Split
+X_train, X_test = train_test_split(X_scaled, test_size=0.2, random_state=42)
 
-# Step 5: Train a Random Forest Regressor and Extract Feature Importance
-rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
-rf_model.fit(X_train, y_train)
+# Step 7: Train Ranking Model
+rf_model = RandomForestRegressor(random_state=42)
+rf_model.fit(X_train, X_train.mean(axis=1))
 
-# Extract feature importance and normalize weights
-feature_importance = rf_model.feature_importances_
-total_importance = sum(feature_importance)
-weights = {k: v / total_importance for k, v in dict(zip(features, feature_importance)).items()}
-print("Estimated Feature Weights (Random Forest):", weights)
+# Step 8: Ranking Prediction
+data['Ranking_Score'] = rf_model.predict(X_scaled)
+data['Ranking'] = data['Ranking_Score'].rank(ascending=False).astype(int)
 
-# Step 6: Calculate Weighted Scores for Rating (with added labels)
-def calculate_weighted_scores(data, weights, train_indices, test_indices):
-    score_columns = list(weights.keys())
-    data['Weighted_Score'] = data[score_columns].mul(pd.Series(weights)).sum(axis=1)
-    # Label dyes as Training or Testing
-    data['Dataset_Label'] = 'Training'
-    data.loc[test_indices, 'Dataset_Label'] = 'Testing'
-    return data
+# Save Results
+data.to_excel('dyes_ranking_results_PBE.xlsx', index=False)
 
-data = calculate_weighted_scores(data, weights, train_indices, test_indices)
-
-# Normalize Weighted Scores Relative to the Reference Dye (first dye)
-reference_score = data.loc[0, 'Weighted_Score']
-data['Normalized_Rating'] = (data['Weighted_Score'] / reference_score) * 100
-
-# Assign Rankings
-data['Ranking'] = data['Normalized_Rating'].rank(ascending=False).astype(int)
-
-# Step 7: Save Results
-output_file = "dyes_ranking_PBE.xlsx"
-data.to_excel(output_file, index=False)
-
-print(f"Ranking and rating results saved to: {output_file}")
-
-# Optional: Visualize Feature Importance
-plt.figure(figsize=(10, 6))
-plt.barh(features, feature_importance)
-plt.xlabel('Feature Importance')
-plt.title('Random Forest Feature Importance')
-plt.show()
+print("Ranking completed. Results saved to 'dyes_ranking_results_PBE.xlsx'.")
