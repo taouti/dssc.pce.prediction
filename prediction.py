@@ -6,11 +6,9 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from mordred import Calculator, descriptors
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, KFold
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_absolute_error, mean_squared_error
-import matplotlib.pyplot as plt
-from xgboost import XGBRegressor
 
 # Constants
 constants = {
@@ -24,6 +22,39 @@ constants = {
     "ECB_TiO2": -4.00,
     "Eredox_iodide": -4.80,
 }
+
+# Function to calculate molecular descriptors from mol file
+def calculate_molecular_descriptors(mol_file):
+    try:
+        # Read molecule from mol file
+        mol = Chem.MolFromMolFile(mol_file)
+        
+        if mol is None:
+            print(f"Could not create molecule from file: {mol_file}")
+            return None
+        
+        # Convert to SMILES for additional descriptor calculation
+        smiles = Chem.MolToSmiles(mol)
+        
+        # Mass Calculation
+        mass = Descriptors.ExactMolWt(mol)
+        
+        # Mordred Descriptor Calculation
+        calc = Calculator(descriptors)
+        mordred_desc = calc(mol)
+        
+        # Convert to dictionary
+        desc_dict = mordred_desc.asdict()
+        
+        # Add mass and SMILES to descriptors
+        desc_dict['Mass'] = mass
+        desc_dict['SMILES'] = smiles
+        
+        return desc_dict
+    
+    except Exception as e:
+        print(f"Error calculating descriptors for mol file {mol_file}: {e}")
+        return None
 
 # Step 1: Extract Data from DFT Outputs
 patterns = {
@@ -40,13 +71,13 @@ cosmo_patterns = {
 }
 excitation_pattern = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
 
-output_dir = './outputs_LDA'
+output_dir = './outputs_PBE'
 data = []
 
 for filename in os.listdir(output_dir):
     if filename.endswith('.txt'):
         file_path = os.path.join(output_dir, filename)
-        record = {'File': filename}
+        record = {'File': filename.replace('.txt', '')}
 
         with open(file_path, 'r') as file:
             content = file.read()
@@ -70,33 +101,49 @@ for filename in os.listdir(output_dir):
 
         data.append(record)
 
-# Step 2: Read Molecular Files and Calculate Descriptors
-mol_dir = './mol_LDA'
-calc = Calculator(descriptors, ignore_3D=True)
+# Save DFT Extracted Data
+dft_df = pd.DataFrame(data)
+dft_df.to_excel('dyes_DFT_PBE_dataset.xlsx', index=False)
 
-for filename in os.listdir(mol_dir):
-    if filename.endswith('.mol'):
-        file_path = os.path.join(mol_dir, filename)
-        mol = Chem.MolFromMolFile(file_path, sanitize=True)
-        if mol:
-            record = {desc[0]: desc[1] for desc in calc(mol).items()}
-            record['Mass'] = Descriptors.ExactMolWt(mol)
-            record['File'] = filename
-            data.append(record)
+# Step 2: Load Experimental Dataset
+experimental_file = 'dyes_experimental_dataset.xlsx'
+experimental_df = pd.read_excel(experimental_file)
 
-# Save Extracted Data
-df = pd.DataFrame(data)
-df.to_excel('dyes_data_PBE.xlsx', index=False)
+# Rename and Preprocess Columns
+experimental_df.rename(columns={
+    'Dye': 'File', 
+    'expPCE': 'PCE'
+}, inplace=True)
 
-# Step 3: Load Dataset
-input_file = "dyes_data_PBE.xlsx"
-data = pd.read_excel(input_file)
+# Calculate Mordred Descriptors from MOL files
+mol_dir = './mol_PBE'
+mordred_descriptors_list = []
+
+for mol_filename in os.listdir(mol_dir):
+    if mol_filename.endswith('.mol'):
+        file_name = mol_filename.replace('.mol', '')
+        mol_path = os.path.join(mol_dir, mol_filename)
+        
+        desc = calculate_molecular_descriptors(mol_path)
+        if desc:
+            desc['File'] = file_name
+            mordred_descriptors_list.append(desc)
+
+mordred_df = pd.DataFrame(mordred_descriptors_list)
+
+# Normalize File Columns
+dft_df['File'] = dft_df['File'].str.strip().str.lower()
+experimental_df['File'] = experimental_df['File'].str.strip().str.lower()
+mordred_df['File'] = mordred_df['File'].str.strip().str.lower()
+
+# Merge Datasets
+data = dft_df.merge(experimental_df, on='File', how='inner').merge(mordred_df, on='File', how='inner')
 
 # Handle Missing Data
 numeric_columns = data.select_dtypes(include=[np.number]).columns
 data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
 
-# Step 4: Calculate Descriptors
+# Step 3: Calculate Additional Descriptors
 def calculate_descriptors(data, constants):
     data['deltaE_LCB'] = data['LUMO'] - constants['ECB_TiO2']
     data['deltaE_RedOxH'] = constants['Eredox_iodide'] - data['HOMO']
@@ -114,32 +161,47 @@ def calculate_descriptors(data, constants):
 
 data = calculate_descriptors(data, constants)
 
-# Step 5: Define Features and Target for Ranking
-features = [
-    'deltaE_LCB', 'deltaE_RedOxH', 'deltaE_HL', 'IP', 'EA', 
-    'elnChemPot', 'chemHardness', 'electronegativity', 
-    'electrophilicityIndex', 'electroacceptingPower', 'electrodonatingPower', 'LHE', 
-    'Dipole_Moment', 'Solvation_Energy_eV', 'Surface_Area_A2', 'Molecular_Volume_A3', 'Mass'
-]
+# Identify numeric columns for feature selection
+numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
 
-X = data[features]
+# Remove non-predictive or redundant columns
+excluded_columns = ['PCE', 'File', 'SMILES']
+feature_columns = [col for col in numeric_columns if col not in excluded_columns]
+
+# Prepare features and target
+X = data[feature_columns]
+y = data['PCE']
 
 # Normalize Features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
-# Step 6: Train-Test Split
-X_train, X_test = train_test_split(X_scaled, test_size=0.2, random_state=42)
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-# Step 7: Train Ranking Model
-rf_model = RandomForestRegressor(random_state=42)
-rf_model.fit(X_train, X_train.mean(axis=1))
+# Train Regression Model
+rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
 
-# Step 8: Ranking Prediction
-data['Ranking_Score'] = rf_model.predict(X_scaled)
-data['Ranking'] = data['Ranking_Score'].rank(ascending=False).astype(int)
+# Evaluate Model
+y_pred = rf_model.predict(X_test)
+mae = mean_absolute_error(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+print(f"MAE: {mae}, RMSE: {rmse}")
 
-# Save Results
-data.to_excel('dyes_ranking_results_PBE.xlsx', index=False)
+# Predict PCE for Entire Dataset
+data['Predicted_PCE'] = rf_model.predict(X_scaled)
 
-print("Ranking completed. Results saved to 'dyes_ranking_results_PBE.xlsx'.")
+# Feature Importance
+feature_importance = pd.DataFrame({
+    'feature': feature_columns,
+    'importance': rf_model.feature_importances_
+}).sort_values('importance', ascending=False)
+
+print("\nTop 10 Most Important Features:")
+print(feature_importance.head(10))
+
+# Save Comprehensive Results
+data.to_excel('dyes_comprehensive_PCE_results_PBE.xlsx', index=False)
+
+print("\nPCE prediction completed. Results saved to 'dyes_comprehensive_PCE_results_PBE.xlsx'.")
