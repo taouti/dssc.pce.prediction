@@ -206,7 +206,7 @@ def calculate_descriptors(data: pd.DataFrame, constants: Dict) -> pd.DataFrame:
     return data
 
 
-def prepare_data(config: Config) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series, List[str], pd.Series]:
+def prepare_data(config: Config) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.Series]:
     """
     Prepare data for machine learning model.
 
@@ -276,9 +276,7 @@ def prepare_data(config: Config) -> Tuple[np.ndarray, np.ndarray, pd.Series, pd.
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    test_dye_names = data.loc[X_test.index, 'File']
-
-    return X_train_scaled, X_test_scaled, y_train, y_test, X.columns.tolist(), test_dye_names
+    return X_train_scaled, X_test_scaled, y_train, y_test
 
 
 def train_and_evaluate_model(
@@ -288,7 +286,7 @@ def train_and_evaluate_model(
     y_test: pd.Series,
     param_grid: Dict,
     random_seed: int
-) -> Tuple[RandomForestRegressor, Dict[str, float], np.ndarray, np.ndarray]:
+) -> Tuple[RandomForestRegressor, Dict[str, float]]:
     """
     Train and evaluate a Random Forest model.
 
@@ -338,96 +336,16 @@ def train_and_evaluate_model(
     for metric, value in metrics.items():
         logger.info(f"{metric}: {value}")
 
-    return best_model, metrics, y_test, y_pred
-
-def save_results_and_visualize(
-    best_model,
-    evaluation_metrics: Dict[str, float],
-    y_test: pd.Series,
-    y_pred: pd.Series,
-    config: Config,
-    feature_names: List[str]
-):
-    """
-    Save results to Excel and generate visualizations
-
-    Args:
-        best_model: Trained Random Forest model
-        evaluation_metrics: Dictionary of model performance metrics
-        y_test: Actual PCE values
-        y_pred: Predicted PCE values
-        X_test: Test feature matrix
-        config: Configuration object
-        feature_names: List of feature names
-    """
-    # Prepare results DataFrame
-    results_df = pd.DataFrame({
-        'Dye Name': y_test.index,  # Assuming index contains dye names
-        'Label': ['Testing'] * len(y_test),
-        'Actual PCE': y_test,
-        'Predicted PCE': y_pred
-    })
-
-    # Add error calculations
-    results_df['Absolute Error'] = np.abs(results_df['Actual PCE'] - results_df['Predicted PCE'])
-    results_df['Percentage Error'] = np.abs(
-        (results_df['Actual PCE'] - results_df['Predicted PCE']) / results_df['Actual PCE'] * 100)
-
-    # Add model metrics to DataFrame
-    for metric, value in evaluation_metrics.items():
-        results_df[metric] = value
-
-    # Add feature importances
-    feature_importances = best_model.feature_importances_
-    for name, importance in zip(feature_names, feature_importances):
-        results_df[f'Feature Importance_{name}'] = importance
-
-    # Save to Excel
-    output_path = os.path.join(config.OUTPUT_DIR, 'PCE_Prediction_Results.xlsx')
-    results_df.to_excel(output_path, index=False)
-    logger.info(f"Results saved to {output_path}")
-
-    # Visualizations
-    plt.figure(figsize=(10, 6))
-    plt.scatter(y_test, y_pred, alpha=0.7)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
-    plt.xlabel('Actual PCE')
-    plt.ylabel('Predicted PCE')
-    plt.title('Actual vs Predicted PCE')
-    plt.tight_layout()
-    plt.savefig(os.path.join(config.OUTPUT_DIR, 'actual_vs_predicted_pce.png'))
-    plt.close()
-
-    # Feature Importance Plot
-    plt.figure(figsize=(10, 6))
-    feature_imp = pd.Series(feature_importances, index=feature_names).sort_values(ascending=False)
-    sns.barplot(x=feature_imp.values, y=feature_imp.index)
-    plt.xlabel('Feature Importance')
-    plt.title('Random Forest Feature Importances')
-    plt.tight_layout()
-    plt.savefig(os.path.join(config.OUTPUT_DIR, 'feature_importances.png'))
-    plt.close()
-
-    # Residual Plot
-    plt.figure(figsize=(10, 6))
-    residuals = y_test - y_pred
-    plt.scatter(y_pred, residuals, alpha=0.7)
-    plt.xlabel('Predicted PCE')
-    plt.ylabel('Residuals')
-    plt.title('Residual Plot')
-    plt.axhline(y=0, color='r', linestyle='--')
-    plt.tight_layout()
-    plt.savefig(os.path.join(config.OUTPUT_DIR, 'residual_plot.png'))
-    plt.close()
+    return best_model, metrics
 
 # Main Execution
 if __name__ == "__main__":
     # Prepare Data
     config = Config()
-    X_train, X_test, y_train, y_test, feature_names, test_dye_names = prepare_data(config)
+    X_train, X_test, y_train, y_test = prepare_data(config)
 
     # Train and Evaluate Model
-    best_model, evaluation_metrics, y_test, y_pred = train_and_evaluate_model(
+    best_model, evaluation_metrics = train_and_evaluate_model(
         X_train=X_train,
         X_test=X_test,
         y_train=y_train,
@@ -436,21 +354,15 @@ if __name__ == "__main__":
         random_seed=config.RANDOM_SEED
     )
 
-    # Predictions
-    y_pred = best_model.predict(X_test)
-
     # Save the best model
     import joblib
     model_path = os.path.join(config.OUTPUT_DIR, 'best_rf_model.pkl')
     joblib.dump(best_model, model_path)
     logger.info(f"Best model saved to {model_path}")
 
-    # Save results and generate visualizations
-    save_results_and_visualize(
-        best_model,
-        evaluation_metrics,
-        pd.Series(y_test, index=test_dye_names),
-        pd.Series(y_pred, index=test_dye_names),
-        config,
-        feature_names
-    )
+    # Save metrics
+    metrics_path = os.path.join(config.OUTPUT_DIR, 'evaluation_metrics.json')
+    with open(metrics_path, 'w') as f:
+        import json
+        json.dump(evaluation_metrics, f, indent=4)
+    logger.info(f"Evaluation metrics saved to {metrics_path}")
