@@ -71,7 +71,7 @@ cosmo_patterns = {
 }
 excitation_pattern = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
 
-output_dir = './outputs_LDA'
+output_dir = './outputs_PBE'
 data = []
 
 for filename in os.listdir(output_dir):
@@ -104,7 +104,7 @@ for filename in os.listdir(output_dir):
 
 # Save DFT Extracted Data
 dft_df = pd.DataFrame(data)
-dft_df.to_excel('dyes_DFT_LDA_dataset.xlsx', index=False)
+dft_df.to_excel('dyes_DFT_PBE_dataset.xlsx', index=False)
 
 # Step 2: Load Experimental Dataset
 experimental_file = 'dyes_experimental_dataset.xlsx'
@@ -117,7 +117,7 @@ experimental_df.rename(columns={
 }, inplace=True)
 
 # Calculate Mordred Descriptors from MOL files
-mol_dir = './mol_LDA'
+mol_dir = './mol_PBE'
 mordred_descriptors_list = []
 
 for mol_filename in os.listdir(mol_dir):
@@ -176,7 +176,7 @@ y = data['PCE']
 
 # Split data into train and test sets with labels
 X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
-    X, y, data['File'], test_size=0.1, random_state=42
+    X, y, data['File'], test_size=0.2, random_state=42
 )
 
 # Normalize Features
@@ -227,9 +227,9 @@ print("\nTop 20 Most Important Features:")
 print(feature_importance.head(20))
 
 # Save Comprehensive Results
-data.to_excel('dyes_comprehensive_PCE_results_LDA.xlsx', index=False)
+data.to_excel('dyes_comprehensive_PCE_results_PBE.xlsx', index=False)
 
-print("\nPCE prediction completed. Results saved to 'dyes_comprehensive_PCE_results_LDA.xlsx'.")
+print("\nPCE prediction completed. Results saved to 'dyes_comprehensive_PCE_results_PBE.xlsx'.")
 
 #TODO Add mean value under Prediction_Error, Prediction_Error_Percentage, and Prediction_Accuracy_Percentage
 #TODO Extend the code so it does the prediction using results from LDA, PBE and B3LYP outputs.

@@ -1,0 +1,200 @@
+2024-12-15 16:36:38,250 - __main__ - INFO - Initializing Random Forest Regressor and GridSearchCV.
+2024-12-15 16:36:38,251 - __main__ - INFO - Training the model using GridSearchCV.
+2024-12-15 16:36:56,678 - __main__ - INFO - Best model parameters: {'max_depth': None, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 100}
+2024-12-15 16:36:56,678 - __main__ - INFO - Evaluating the model.
+2024-12-15 16:36:56,685 - __main__ - INFO - Evaluation metrics:
+2024-12-15 16:36:56,686 - __main__ - INFO - MAE: 0.01247374999999999
+2024-12-15 16:36:56,686 - __main__ - INFO - MSE: 0.00023763698925000009
+2024-12-15 16:36:56,687 - __main__ - INFO - RMSE: 0.015415478884874129
+2024-12-15 16:36:56,687 - __main__ - INFO - R2: 0.12813562333323358
+2024-12-15 16:36:56,687 - __main__ - INFO - MAPE: 2.398528852509033
+2024-12-15 16:36:56,709 - __main__ - INFO - Best model saved to ./outputs_LDA\best_rf_model.pkl
+2024-12-15 16:36:57,736 - __main__ - INFO - Results saved to ./outputs_LDA\PCE_Prediction_Results.xlsx
+2024-12-15 16:41:56,360 - __main__ - INFO - Initializing Random Forest Regressor and GridSearchCV.
+2024-12-15 16:41:56,361 - __main__ - INFO - Training the model using GridSearchCV.
+2024-12-15 16:42:14,920 - __main__ - INFO - Best model parameters: {'max_depth': None, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 50}
+2024-12-15 16:42:14,920 - __main__ - INFO - Evaluating the model.
+2024-12-15 16:42:14,923 - __main__ - INFO - Evaluation metrics:
+2024-12-15 16:42:14,923 - __main__ - INFO - MAE: 0.012151500000000003
+2024-12-15 16:42:14,923 - __main__ - INFO - MSE: 0.00022447934099999994
+2024-12-15 16:42:14,923 - __main__ - INFO - RMSE: 0.014982634648151838
+2024-12-15 16:42:14,923 - __main__ - INFO - R2: 0.17640960974457642
+2024-12-15 16:42:14,923 - __main__ - INFO - MAPE: 1.8592728384759758
+2024-12-15 16:42:14,935 - __main__ - INFO - Best model saved to ./outputs_LDA\best_rf_model.pkl
+2024-12-15 16:42:15,496 - __main__ - INFO - Results saved to ./outputs_LDA\PCE_Prediction_Results.xlsx
+2024-12-17 18:44:57,682 - __main__ - INFO - Initializing Random Forest Regressor and GridSearchCV.
+2024-12-17 18:44:57,696 - __main__ - INFO - Training the model using GridSearchCV.
+2024-12-17 18:45:10,507 - __main__ - INFO - Best model parameters: {'max_depth': None, 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 50}
+2024-12-17 18:45:10,507 - __main__ - INFO - Evaluating the model.
+2024-12-17 18:45:10,509 - __main__ - INFO - Evaluation metrics:
+2024-12-17 18:45:10,509 - __main__ - INFO - MAE: 0.014231905357142857
+2024-12-17 18:45:10,509 - __main__ - INFO - MSE: 0.00023635139202173608
+2024-12-17 18:45:10,509 - __main__ - INFO - RMSE: 0.015373724077845813
+2024-12-17 18:45:10,509 - __main__ - INFO - R2: 0.13285234032919646
+2024-12-17 18:45:10,509 - __main__ - INFO - MAPE: 2.7672449402142094
+2024-12-17 18:45:10,516 - __main__ - INFO - Best model saved to ./outputs_LDA\best_rf_model.pkl
+2024-12-17 18:45:10,517 - __main__ - INFO - Evaluation metrics saved to ./outputs_LDA\evaluation_metrics.json
+2024-12-17 18:46:40,894 - __main__ - INFO - Initializing Random Forest Regressor and GridSearchCV.
+2024-12-17 18:46:40,894 - __main__ - INFO - Training the model using GridSearchCV.
+2024-12-17 18:46:54,924 - __main__ - INFO - Best model parameters: {'max_depth': None, 'min_samples_leaf': 1, 'min_samples_split': 2, 'n_estimators': 50}
+2024-12-17 18:46:54,924 - __main__ - INFO - Evaluating the model.
+2024-12-17 18:46:54,926 - __main__ - INFO - Evaluation metrics:
+2024-12-17 18:46:54,926 - __main__ - INFO - MAE: 0.003285600000000004
+2024-12-17 18:46:54,926 - __main__ - INFO - MSE: 1.8042696000000056e-05
+2024-12-17 18:46:54,926 - __main__ - INFO - RMSE: 0.004247669478667102
+2024-12-17 18:46:54,926 - __main__ - INFO - R2: 0.6105646400635425
+2024-12-17 18:46:54,926 - __main__ - INFO - MAPE: 0.07275943734668541
+2024-12-17 18:46:54,933 - __main__ - INFO - Best model saved to ./outputs_PBE\best_rf_model.pkl
+2024-12-17 18:46:54,934 - __main__ - INFO - Evaluation metrics saved to ./outputs_PBE\evaluation_metrics.json
+2024-12-17 18:48:31,915 - __main__ - INFO - Initializing Random Forest Regressor and GridSearchCV.
+2024-12-17 18:48:31,915 - __main__ - INFO - Training the model using GridSearchCV.
+2024-12-17 18:48:42,890 - __main__ - INFO - Best model parameters: {'max_depth': None, 'min_samples_leaf': 4, 'min_samples_split': 2, 'n_estimators': 50}
+2024-12-17 18:48:42,890 - __main__ - INFO - Evaluating the model.
+2024-12-17 18:48:42,893 - __main__ - INFO - Evaluation metrics:
+2024-12-17 18:48:42,893 - __main__ - INFO - MAE: 0.014781448809523813
+2024-12-17 18:48:42,893 - __main__ - INFO - MSE: 0.00024951288152212875
+2024-12-17 18:48:42,893 - __main__ - INFO - RMSE: 0.015795976751126494
+2024-12-17 18:48:42,893 - __main__ - INFO - R2: 0.08456426078618373
+2024-12-17 18:48:42,893 - __main__ - INFO - MAPE: 2.776004760275198
+2024-12-17 18:48:42,900 - __main__ - INFO - Best model saved to ./outputs_LDA\best_rf_model.pkl
+2024-12-17 18:48:42,900 - __main__ - INFO - Evaluation metrics saved to ./outputs_LDA\evaluation_metrics.json
+2024-12-19 11:46:01,367 - INFO - Starting PCE prediction pipeline at 2024-12-19 11:46:01.367829
+2024-12-19 11:46:01,368 - INFO - Preparing dataset...
+2024-12-19 11:46:01,368 - INFO - Extracting DFT data...
+2024-12-19 11:46:07,644 - INFO - Loading experimental data...
+2024-12-19 11:46:07,674 - INFO - Calculating molecular descriptors...
+2024-12-19 11:46:15,332 - INFO - Calculating additional descriptors...
+2024-12-19 11:46:15,342 - INFO - Training model and generating predictions...
+2024-12-19 11:46:15,576 - INFO - Training Random Forest model...
+2024-12-19 11:46:17,384 - INFO - Cross-validation scores: [-3.34643551 -0.30761175  0.79873396  0.55247522 -0.70884073]
+2024-12-19 11:46:17,384 - INFO - Mean CV score: -0.6023 (±2.9563)
+2024-12-19 11:46:17,833 - INFO - Selected features: ['nAromBond', 'nH', 'ATS4dv', 'ATS8d', 'ATS6v', 'ATS8v', 'ATS2se', 'ATS5pe', 'ATS8are', 'AATS0dv', 'AATS2dv', 'AATS4dv', 'AATS8dv', 'AATS2d', 'AATS2s', 'AATS4s', 'AATS4Z', 'AATS6Z', 'AATS7Z', 'AATS8m', 'AATS0v', 'AATS6v', 'AATS0se', 'AATS1se', 'AATS6se', 'AATS0pe', 'AATS5pe', 'AATS7pe', 'AATS1p', 'AATS3i', 'AATS4i', 'AATS6i', 'AATS8i', 'ATSC1dv', 'ATSC4dv', 'ATSC7dv', 'ATSC2d', 'ATSC6d', 'ATSC8d', 'ATSC5s', 'ATSC6s', 'ATSC1Z', 'ATSC7Z', 'ATSC8Z', 'ATSC7v', 'ATSC1se', 'ATSC3se', 'ATSC0p', 'ATSC1p', 'ATSC1i', 'ATSC6i', 'AATSC4c', 'AATSC6c', 'AATSC7dv', 'AATSC3d', 'AATSC6d', 'AATSC0s', 'AATSC5s', 'AATSC1Z', 'AATSC5Z', 'AATSC8m', 'AATSC0v', 'AATSC3v', 'AATSC6v', 'AATSC3se', 'AATSC0pe', 'AATSC6pe', 'AATSC8pe', 'AATSC2p', 'AATSC3p', 'AATSC7p', 'AATSC0i', 'MATS6dv', 'MATS1d', 'MATS2d', 'MATS6d', 'MATS8d', 'MATS7s', 'MATS8Z', 'MATS1m', 'MATS6m', 'MATS3v', 'MATS2se', 'MATS3se', 'MATS4se', 'MATS5are', 'MATS2p', 'MATS3i', 'GATS3c', 'GATS6dv', 'GATS7dv', 'GATS1d', 'GATS5d', 'GATS1s', 'GATS3s', 'GATS6Z', 'GATS3m', 'GATS3v', 'GATS5v', 'GATS7v', 'GATS8v', 'GATS2se', 'GATS3se', 'GATS8se', 'GATS3pe', 'GATS3are', 'GATS5p', 'GATS6p', 'GATS3i', 'GATS5i', 'GATS8i', 'BCUTd-1h', 'BCUTs-1l', 'BCUTZ-1h', 'BCUTm-1h', 'BCUTpe-1l', 'BCUTi-1h', 'SpMax_DzZ', 'SpDiam_DzZ', 'SM1_DzZ', 'SpDiam_Dzm', 'SM1_Dzm', 'VE1_Dzm', 'VE1_Dzv', 'SpDiam_Dzse', 'VE3_Dzare', 'VR3_Dzp', 'DPSA3', 'FPSA1', 'WPSA2', 'RNCS', 'RPCS', 'C1SP1', 'Xp-2d', 'Xp-3d', 'AXp-0d', 'AXp-1d', 'AXp-4d', 'AXp-5dv', 'Spe', 'Sare', 'Mv', 'VR3_D', 'NtN', 'NsssN', 'SsCH3', 'SaaCH', 'StN', 'MAXaasC', 'ETA_shape_p', 'ETA_beta_ns', 'AETA_beta_ns', 'AETA_beta_ns_d', 'ETA_eta_FL', 'ETA_eta_B', 'ETA_epsilon_2', 'ETA_epsilon_3', 'AETA_dBeta', 'ETA_psi_1', 'GeomDiameter', 'IC3', 'IC4', 'TIC0', 'SIC0', 'MIC1', 'ZMIC5', 'PEOE_VSA8', 'SMR_VSA5', 'EState_VSA6', 'VSA_EState3', 'MDEC-22', 'AMID', 'AMID_O', 'MOMI-Z', 'nFHRing', 'RotRatio', 'TopoPSA', 'GGI4', 'GGI8', 'JGI6', 'LHE']
+2024-12-19 11:46:17,848 - INFO - Model Performance - MAE: 0.0050, RMSE: 0.0067
+2024-12-19 11:46:17,875 - INFO - Mean Prediction Metrics:
+Prediction_Error                   0.004551
+Prediction_Error_Percentage       37.920682
+Prediction_Accuracy_Percentage    84.210861
+dtype: float64
+2024-12-19 11:46:17,982 - INFO - Saving results...
+2024-12-19 11:46:18,747 - INFO - Pipeline completed. Total execution time: 0:00:17.379273
+2024-12-19 11:46:18,747 - INFO - 
+Summary Statistics:
+2024-12-19 11:46:18,747 - INFO - --------------------------------------------------
+2024-12-19 11:46:18,747 - INFO - Total number of compounds: 22
+2024-12-19 11:46:18,759 - INFO - Training set size: 17
+2024-12-19 11:46:18,901 - INFO - Test set size: 5
+2024-12-19 11:46:18,901 - INFO - 
+Prediction Metrics:
+2024-12-19 11:46:18,901 - INFO - Mean Prediction Error: 0.0046
+2024-12-19 11:46:18,901 - INFO - Mean Prediction Accuracy: 84.21%
+2024-12-19 11:46:18,901 - INFO - 
+Top 10 Most Important Features:
+2024-12-19 11:46:18,901 - INFO - GATS3c: 0.1588
+2024-12-19 11:46:18,902 - INFO - GATS3pe: 0.0522
+2024-12-19 11:46:18,902 - INFO - AATSC0v: 0.0390
+2024-12-19 11:46:18,902 - INFO - AXp-1d: 0.0312
+2024-12-19 11:46:18,902 - INFO - GATS3se: 0.0306
+2024-12-19 11:46:18,902 - INFO - SM1_Dzm: 0.0225
+2024-12-19 11:46:18,902 - INFO - GATS3are: 0.0220
+2024-12-19 11:46:18,902 - INFO - AATSC5s: 0.0215
+2024-12-19 11:46:18,902 - INFO - GATS3s: 0.0171
+2024-12-19 11:46:18,902 - INFO - SM1_DzZ: 0.0162
+2024-12-19 11:46:18,902 - INFO - 
+Starting additional analysis for different methods and solvation conditions...
+2024-12-19 11:46:18,903 - INFO - 
+Processing LDA with experimental solvation...
+2024-12-19 11:46:18,903 - WARNING - Directory ./outputs_LDA_experimental not found. Skipping...
+2024-12-19 11:46:18,903 - INFO - 
+Processing LDA with ethanol solvation...
+2024-12-19 11:46:18,903 - WARNING - Directory ./outputs_LDA_ethanol not found. Skipping...
+2024-12-19 11:46:18,903 - INFO - 
+Processing LDA with gas solvation...
+2024-12-19 11:46:18,903 - WARNING - Directory ./outputs_LDA_gas not found. Skipping...
+2024-12-19 11:46:18,903 - INFO - 
+Processing PBE with experimental solvation...
+2024-12-19 11:46:18,903 - WARNING - Directory ./outputs_PBE_experimental not found. Skipping...
+2024-12-19 11:46:18,903 - INFO - 
+Processing PBE with ethanol solvation...
+2024-12-19 11:46:18,903 - WARNING - Directory ./outputs_PBE_ethanol not found. Skipping...
+2024-12-19 11:46:18,903 - INFO - 
+Processing PBE with gas solvation...
+2024-12-19 11:46:18,904 - WARNING - Directory ./outputs_PBE_gas not found. Skipping...
+2024-12-19 11:46:18,904 - INFO - 
+Processing B3LYP with experimental solvation...
+2024-12-19 11:46:18,904 - WARNING - Directory ./outputs_B3LYP_experimental not found. Skipping...
+2024-12-19 11:46:18,904 - INFO - 
+Processing B3LYP with ethanol solvation...
+2024-12-19 11:46:18,904 - WARNING - Directory ./outputs_B3LYP_ethanol not found. Skipping...
+2024-12-19 11:46:18,904 - INFO - 
+Processing B3LYP with gas solvation...
+2024-12-19 11:46:18,904 - WARNING - Directory ./outputs_B3LYP_gas not found. Skipping...
+2024-12-19 12:02:22,577 - INFO - Starting PCE prediction pipeline at 2024-12-19 12:02:22.577108
+2024-12-19 12:02:22,577 - INFO - Preparing dataset...
+2024-12-19 12:02:22,577 - INFO - Extracting DFT data...
+2024-12-19 12:02:25,504 - INFO - Loading experimental data...
+2024-12-19 12:02:25,521 - INFO - Calculating molecular descriptors...
+2024-12-19 12:02:31,088 - INFO - Calculating additional descriptors...
+2024-12-19 12:02:31,099 - INFO - Training model and generating predictions...
+2024-12-19 12:02:31,284 - INFO - Training Random Forest model...
+2024-12-19 12:02:32,891 - INFO - Cross-validation scores: [ 0.87115507  0.52724515 -1.01737628  0.51016576  0.00393087]
+2024-12-19 12:02:32,891 - INFO - Mean CV score: 0.1790 (±1.3182)
+2024-12-19 12:02:33,308 - INFO - Selected features: ['LUMO', 'Total_Energy_Hartree', 'Max_f_osc', 'SpDiam_A', 'nHeavyAtom', 'ATS4dv', 'ATS3d', 'ATS2s', 'ATS6v', 'ATS8are', 'ATS1i', 'AATS0dv', 'AATS4dv', 'AATS8dv', 'AATS6d', 'AATS7d', 'AATS2s', 'AATS6s', 'AATS8s', 'AATS4Z', 'AATS5Z', 'AATS4v', 'AATS8v', 'AATS1se', 'AATS6se', 'AATS6pe', 'AATS4are', 'AATS1p', 'AATS2p', 'AATS4p', 'AATS7p', 'AATS2i', 'AATS5i', 'ATSC1c', 'ATSC3c', 'ATSC7dv', 'ATSC3s', 'ATSC5s', 'ATSC1m', 'ATSC6v', 'ATSC1se', 'ATSC7are', 'ATSC3i', 'AATSC2dv', 'AATSC0d', 'AATSC5s', 'AATSC0Z', 'AATSC0v', 'AATSC3v', 'AATSC6p', 'AATSC0i', 'AATSC3i', 'MATS8c', 'MATS2s', 'MATS1m', 'MATS2m', 'MATS3m', 'MATS3v', 'MATS6v', 'MATS1se', 'MATS7se', 'MATS6are', 'GATS3c', 'GATS1s', 'GATS1Z', 'GATS3Z', 'GATS8Z', 'GATS3m', 'GATS4m', 'GATS3se', 'GATS8se', 'GATS3pe', 'GATS3are', 'GATS1p', 'GATS3p', 'GATS6p', 'GATS8p', 'GATS2i', 'GATS3i', 'GATS5i', 'BCUTdv-1l', 'BCUTs-1l', 'BCUTp-1h', 'BCUTi-1h', 'BCUTi-1l', 'SpAbs_DzZ', 'SM1_Dzm', 'VR2_Dzm', 'VE1_Dzv', 'SpMax_Dzpe', 'VE2_Dzpe', 'VE3_Dzare', 'SM1_Dzp', 'VR3_Dzi', 'nBondsT', 'PNSA4', 'FNSA4', 'FNSA5', 'WNSA4', 'HybRatio', 'FCSP3', 'Xc-3dv', 'Xpc-5d', 'AXp-0d', 'AXp-1d', 'AXp-7d', 'Xp-6dv', 'AXp-2dv', 'Si', 'NdssC', 'NtN', 'AETA_eta_F', 'AETA_eta_FL', 'ETA_dEpsilon_A', 'ETA_dEpsilon_B', 'ETA_dEpsilon_D', 'fMF', 'IC1', 'BIC3', 'CIC4', 'MIC2', 'ZMIC3', 'ZMIC5', 'Kier3', 'VMcGowan', 'PEOE_VSA2', 'PEOE_VSA6', 'PEOE_VSA7', 'PEOE_VSA8', 'SlogP_VSA1', 'EState_VSA6', 'EState_VSA8', 'EState_VSA9', 'VSA_EState4', 'MDEC-22', 'MID_N', 'piPC4', 'piPC10', 'naHRing', 'TopoPSA', 'JGI1', 'JGI3', 'JGI5', 'SRW10', 'Mass', 'deltaE_LCB', 'IP', 'EA', 'electronegativity', 'electrophilicityIndex', 'electrodonatingPower']
+2024-12-19 12:02:33,322 - INFO - Model Performance - MAE: 0.0070, RMSE: 0.0075
+2024-12-19 12:02:33,350 - INFO - Mean Prediction Metrics:
+Prediction_Error                   0.003930
+Prediction_Error_Percentage       33.846601
+Prediction_Accuracy_Percentage    80.401132
+dtype: float64
+2024-12-19 12:02:33,453 - INFO - Saving results...
+2024-12-19 12:02:34,256 - INFO - Pipeline completed. Total execution time: 0:00:11.679423
+2024-12-19 12:02:34,256 - INFO - 
+Summary Statistics:
+2024-12-19 12:02:34,256 - INFO - --------------------------------------------------
+2024-12-19 12:02:34,256 - INFO - Total number of compounds: 24
+2024-12-19 12:02:34,266 - INFO - Training set size: 19
+2024-12-19 12:02:34,274 - INFO - Test set size: 5
+2024-12-19 12:02:34,274 - INFO - 
+Prediction Metrics:
+2024-12-19 12:02:34,274 - INFO - Mean Prediction Error: 0.0039
+2024-12-19 12:02:34,274 - INFO - Mean Prediction Accuracy: 80.40%
+2024-12-19 12:02:34,274 - INFO - 
+Top 10 Most Important Features:
+2024-12-19 12:02:34,275 - INFO - GATS3c: 0.3270
+2024-12-19 12:02:34,275 - INFO - SpDiam_A: 0.0451
+2024-12-19 12:02:34,275 - INFO - AATSC0v: 0.0240
+2024-12-19 12:02:34,275 - INFO - TopoPSA: 0.0235
+2024-12-19 12:02:34,275 - INFO - AATS2s: 0.0230
+2024-12-19 12:02:34,275 - INFO - GATS3pe: 0.0226
+2024-12-19 12:02:34,275 - INFO - GATS3m: 0.0224
+2024-12-19 12:02:34,275 - INFO - GATS3Z: 0.0215
+2024-12-19 12:02:34,275 - INFO - GATS2i: 0.0172
+2024-12-19 12:02:34,275 - INFO - AXp-1d: 0.0155
+2024-12-19 12:02:34,275 - INFO - 
+Starting additional analysis for different methods and solvation conditions...
+2024-12-19 12:02:34,275 - INFO - 
+Processing LDA with experimental solvation...
+2024-12-19 12:02:34,275 - WARNING - Directory ./outputs_LDA_experimental not found. Skipping...
+2024-12-19 12:02:34,275 - INFO - 
+Processing LDA with ethanol solvation...
+2024-12-19 12:02:34,275 - WARNING - Directory ./outputs_LDA_ethanol not found. Skipping...
+2024-12-19 12:02:34,275 - INFO - 
+Processing LDA with gas solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_LDA_gas not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing PBE with experimental solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_PBE_experimental not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing PBE with ethanol solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_PBE_ethanol not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing PBE with gas solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_PBE_gas not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing B3LYP with experimental solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_B3LYP_experimental not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing B3LYP with ethanol solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_B3LYP_ethanol not found. Skipping...
+2024-12-19 12:02:34,276 - INFO - 
+Processing B3LYP with gas solvation...
+2024-12-19 12:02:34,276 - WARNING - Directory ./outputs_B3LYP_gas not found. Skipping...
