@@ -1,0 +1,10 @@
+# os version info not found
+re==2.2.1
+logging==0.5.1.2
+joblib==1.4.2
+pandas==2.2.3
+numpy==1.26.4
+rdkit==2024.03.6
+mordred==1.2.0
+sklearn==1.5.2
+# datetime version info not found

@@ -28,20 +28,20 @@ logger = logging.getLogger(__name__)
 # File and Directory Configuration
 CONFIG = {
     # Input Directories
-    'DFT_OUTPUT_DIR': './outputs_PBE',
-    'MOL_DIR': './mol_PBE',
+    'DFT_OUTPUT_DIR': './outputs_PBE_ethanol',
+    'MOL_DIR': './mol_PBE_ethanol',
 
     # Input Files
     'EXPERIMENTAL_DATA': 'dyes_experimental_dataset.xlsx',
 
     # Output Files
-    'DFT_DATASET': 'dyes_DFT_PBE_dataset.xlsx',
-    'COMPREHENSIVE_RESULTS': 'dyes_comprehensive_PCE_results_PBE.xlsx',
-    'MODEL_OUTPUT': 'pce_prediction_model.joblib',
-    'FEATURE_IMPORTANCE': 'feature_importance.xlsx',
+    'DFT_DATASET': 'dyes_DFT_PBE_eth_dataset.xlsx',
+    'COMPREHENSIVE_RESULTS': 'PCE_results_PBE_eth.xlsx',
+    'MODEL_OUTPUT': 'pce_prediction_model_PBE_eth.joblib',
+    'FEATURE_IMPORTANCE': 'feature_importance_PBE_eth.xlsx',
 
     # Model Parameters
-    'TEST_SIZE': 0.2,
+    'TEST_SIZE': 0.1,
     'RANDOM_STATE': 42,
     'N_ESTIMATORS': 100,
     'CV_FOLDS': 5
@@ -89,7 +89,8 @@ def validate_directories():
 
 def calculate_molecular_descriptors(mol_file):
     """
-    Calculate molecular descriptors from mol file using RDKit and Mordred.
+    Calculate essential molecular descriptors from mol file using RDKit and Mordred.
+    Only calculates most relevant descriptors for PCE prediction.
 
     Args:
         mol_file (str): Path to the mol file
@@ -103,15 +104,33 @@ def calculate_molecular_descriptors(mol_file):
             logger.error(f"Could not create molecule from file: {mol_file}")
             return None
 
-        smiles = Chem.MolToSmiles(mol)
+        # Calculate Mass separately as it's needed for other calculations
         mass = Descriptors.ExactMolWt(mol)
+        smiles = Chem.MolToSmiles(mol)
 
-        calc = Calculator(descriptors)
+        # Basic RDKit descriptors
+        desc_dict = {
+            'Mass': mass,  # Keeping Mass as it's needed for other calculations
+            'SMILES': smiles,
+            'LogP': Descriptors.MolLogP(mol),
+            'TPSA': Descriptors.TPSA(mol),
+            'RotatableBonds': Descriptors.NumRotatableBonds(mol),
+            'HBondDonors': Descriptors.NumHDonors(mol),
+            'HBondAcceptors': Descriptors.NumHAcceptors(mol),
+            'RingCount': Descriptors.RingCount(mol),
+            'AromaticRings': Descriptors.NumAromaticRings(mol)
+        }
+
+        # Create calculator with default descriptors
+        calc = Calculator()
+
         mordred_desc = calc(mol)
 
-        desc_dict = mordred_desc.asdict()
-        desc_dict['Mass'] = mass
-        desc_dict['SMILES'] = smiles
+        # Filter out any invalid or NaN values
+        for key, value in mordred_desc.items():
+            if hasattr(value, 'value'):  # Check if descriptor was calculated successfully
+                if value.value is not None and not np.isnan(value.value):
+                    desc_dict[key] = value.value
 
         return desc_dict
 
@@ -198,7 +217,7 @@ def calculate_descriptors(data, constants):
 
 
 def prepare_dataset():
-    """Prepare and merge all datasets."""
+    """Prepare and merge all datasets with optimized descriptor selection."""
     try:
         # Extract DFT data
         logger.info("Extracting DFT data...")
@@ -210,7 +229,7 @@ def prepare_dataset():
         experimental_df = pd.read_excel(CONFIG['EXPERIMENTAL_DATA'])
         experimental_df.rename(columns={'Dye': 'File', 'expPCE': 'PCE'}, inplace=True)
 
-        # Calculate Mordred descriptors
+        # Calculate molecular descriptors
         logger.info("Calculating molecular descriptors...")
         mordred_descriptors_list = []
         for mol_filename in os.listdir(CONFIG['MOL_DIR']):
@@ -223,7 +242,27 @@ def prepare_dataset():
                     desc['File'] = file_name
                     mordred_descriptors_list.append(desc)
 
+        if not mordred_descriptors_list:
+            raise ValueError("No valid molecular descriptors were calculated")
+
         mordred_df = pd.DataFrame(mordred_descriptors_list)
+
+        # Remove columns with all NaN values or constant values
+        # But ensure we keep 'Mass' and 'SMILES' columns
+        essential_columns = ['Mass', 'SMILES', 'File']
+        other_columns = [col for col in mordred_df.columns if col not in essential_columns]
+
+        # Only clean non-essential columns
+        mordred_df_cleaned = mordred_df[essential_columns].copy()
+        temp_df = mordred_df[other_columns].copy()
+
+        # Remove problematic columns from non-essential columns only
+        temp_df = temp_df.dropna(axis=1, how='all')
+        constant_cols = temp_df.columns[temp_df.nunique() == 1]
+        temp_df = temp_df.drop(columns=constant_cols)
+
+        # Combine back with essential columns
+        mordred_df = pd.concat([mordred_df_cleaned, temp_df], axis=1)
 
         # Normalize File columns
         for df in [dft_df, experimental_df, mordred_df]:
@@ -565,7 +604,7 @@ def run_additional_analysis():
 
         # List of solvation conditions
         solvation_conditions = [
-            'experimental',  # Matches experimental protocols
+            'exp',  # Matches experimental protocols
             'ethanol',  # Unified ethanol solvation
             'gas'  # Gas phase calculations
         ]
