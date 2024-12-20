@@ -44,7 +44,10 @@ CONFIG = {
     'TEST_SIZE': 0.1,
     'RANDOM_STATE': 42,
     'N_ESTIMATORS': 100,
-    'CV_FOLDS': 5
+    'CV_FOLDS': 5,
+    'N_JOBS': -1,
+    'MAX_FEATURES': 'sqrt',
+    'MAX_SAMPLES': 0.3,
 }
 
 # Physical Constants
@@ -309,7 +312,10 @@ def train_and_evaluate_model(data):
         logger.info("Training Random Forest model...")
         rf_model = RandomForestRegressor(
             n_estimators=CONFIG['N_ESTIMATORS'],
-            random_state=CONFIG['RANDOM_STATE']
+            random_state=CONFIG['RANDOM_STATE'],
+            n_jobs=CONFIG['N_JOBS'],
+            max_features=CONFIG['MAX_FEATURES'],
+            max_samples=CONFIG['MAX_SAMPLES'],
         )
 
         # Perform cross-validation
