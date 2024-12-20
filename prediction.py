@@ -41,7 +41,7 @@ CONFIG = {
     'FEATURE_IMPORTANCE': 'feature_importance.xlsx',
 
     # Model Parameters
-    'TEST_SIZE': 0.2,
+    'TEST_SIZE': 0.1,
     'RANDOM_STATE': 42,
     'N_ESTIMATORS': 100,
     'CV_FOLDS': 5
