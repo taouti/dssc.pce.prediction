@@ -1,18 +1,20 @@
+import dataclasses
 import os
 import re
 import logging
-import joblib
+from typing import Tuple, Dict
 import pandas as pd
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import Descriptors
-from mordred import Calculator, descriptors
+from mordred import Calculator
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_absolute_error, mean_squared_error
-from sklearn.feature_selection import SelectFromModel
 from datetime import datetime
+
+from utils.logging_utils import ExecutionLogger
+from utils.regression_metrics_utils import ModelEvaluator
 
 # Setup logging
 logging.basicConfig(
@@ -28,21 +30,20 @@ logger = logging.getLogger(__name__)
 # File and Directory Configuration
 CONFIG = {
     # Input Directories
-    'DFT_OUTPUT_DIR': 'outputs_PBE',
-    'MOL_DIR': 'mol_PBE',
+    'DFT_OUTPUT_DIR': './outputs_PBE_ethanol',
+    'MOL_DIR': './mol_PBE_ethanol',
 
     # Input Files
     'EXPERIMENTAL_DATA': 'dyes_experimental_dataset.xlsx',
 
     # Output Files
-    'DFT_DATASET': 'dyes_DFT_PBE_dataset.xlsx',
-    'COMPREHENSIVE_RESULTS': 'dyes_comprehensive_PCE_results_PBE.xlsx',
-    'MODEL_OUTPUT': 'pce_prediction_model.joblib',
-    'FEATURE_IMPORTANCE': 'feature_importance.xlsx',
+    'DFT_DATASET': 'dyes_DFT_PBE_eth_dataset.xlsx',
+    'COMPREHENSIVE_RESULTS': 'PCE_results_PBE_eth.xlsx',
+    'MODEL_OUTPUT': 'pce_prediction_model_PBE_eth.joblib',
 
     # Model Parameters
-    'TEST_SIZE': 0.2,
-    'RANDOM_STATE': 42,
+    'TEST_SIZE': 0.15,
+    'RANDOM_STATE': 0,
     'N_ESTIMATORS': 100,
     'CV_FOLDS': 5,
     'N_JOBS': -1,
@@ -62,6 +63,7 @@ CONSTANTS = {
     "ECB_TiO2": -4.00,
     "Eredox_iodide": -4.80,
 }
+
 
 # Regular Expression Patterns
 PATTERNS = {
@@ -92,7 +94,8 @@ def validate_directories():
 
 def calculate_molecular_descriptors(mol_file):
     """
-    Calculate molecular descriptors from mol file using RDKit and Mordred.
+    Calculate essential molecular descriptors from mol file using RDKit and Mordred.
+    Only calculates most relevant descriptors for PCE prediction.
 
     Args:
         mol_file (str): Path to the mol file
@@ -106,15 +109,33 @@ def calculate_molecular_descriptors(mol_file):
             logger.error(f"Could not create molecule from file: {mol_file}")
             return None
 
-        smiles = Chem.MolToSmiles(mol)
+        # Calculate Mass separately as it's needed for other calculations
         mass = Descriptors.ExactMolWt(mol)
+        smiles = Chem.MolToSmiles(mol)
 
-        calc = Calculator(descriptors)
+        # Basic RDKit descriptors
+        desc_dict = {
+            'Mass': mass,  # Keeping Mass as it's needed for other calculations
+            'SMILES': smiles,
+            'LogP': Descriptors.MolLogP(mol),
+            'TPSA': Descriptors.TPSA(mol),
+            'RotatableBonds': Descriptors.NumRotatableBonds(mol),
+            'HBondDonors': Descriptors.NumHDonors(mol),
+            'HBondAcceptors': Descriptors.NumHAcceptors(mol),
+            'RingCount': Descriptors.RingCount(mol),
+            'AromaticRings': Descriptors.NumAromaticRings(mol)
+        }
+
+        # Create calculator with default descriptors
+        calc = Calculator()
+
         mordred_desc = calc(mol)
 
-        desc_dict = mordred_desc.asdict()
-        desc_dict['Mass'] = mass
-        desc_dict['SMILES'] = smiles
+        # Filter out any invalid or NaN values
+        for key, value in mordred_desc.items():
+            if hasattr(value, 'value'):  # Check if descriptor was calculated successfully
+                if value.value is not None and not np.isnan(value.value):
+                    desc_dict[key] = value.value
 
         return desc_dict
 
@@ -126,7 +147,6 @@ def calculate_molecular_descriptors(mol_file):
 def extract_dft_data():
     """Extract data from DFT output files."""
     data = []
-
     try:
         for filename in os.listdir(CONFIG['DFT_OUTPUT_DIR']):
             if not filename.endswith('.txt'):
@@ -135,33 +155,28 @@ def extract_dft_data():
             file_path = os.path.join(CONFIG['DFT_OUTPUT_DIR'], filename)
             record = {'File': filename.replace('.txt', '')}
 
-            try:
-                with open(file_path, 'r') as file:
-                    content = file.read()
+            with open(file_path, 'r') as file:
+                content = file.read()
 
-                    for key, pattern in PATTERNS.items():
-                        matches = re.findall(pattern, content)
-                        record[key] = float(matches[-1]) if matches else None
+                for key, pattern in PATTERNS.items():
+                    matches = re.findall(pattern, content)
+                    record[key] = float(matches[-1]) if matches else None
 
-                    for key, pattern in COSMO_PATTERNS.items():
-                        matches = re.findall(pattern, content)
-                        record[key] = float(matches[-1]) if matches else None
+                for key, pattern in COSMO_PATTERNS.items():
+                    matches = re.findall(pattern, content)
+                    record[key] = float(matches[-1]) if matches else None
 
-                    excitations = re.findall(EXCITATION_PATTERN, content)
-                    if excitations:
-                        max_excitation = max([(float(ex[0]), float(ex[1]), float(ex[2]))
-                                              for ex in excitations], key=lambda x: x[2])
-                        record['Max_Absorption_nm'] = max_excitation[1]
-                        record['Max_f_osc'] = max_excitation[2]
-                    else:
-                        record['Max_Absorption_nm'] = None
-                        record['Max_f_osc'] = None
+                excitations = re.findall(EXCITATION_PATTERN, content)
+                if excitations:
+                    max_excitation = max([(float(ex[0]), float(ex[1]), float(ex[2]))
+                                          for ex in excitations], key=lambda x: x[2])
+                    record['Max_Absorption_nm'] = max_excitation[1]
+                    record['Max_f_osc'] = max_excitation[2]
+                else:
+                    record['Max_Absorption_nm'] = None
+                    record['Max_f_osc'] = None
 
-                data.append(record)
-
-            except Exception as e:
-                logger.error(f"Error processing file {filename}: {e}")
-                continue
+            data.append(record)
 
         return pd.DataFrame(data)
 
@@ -213,7 +228,7 @@ def prepare_dataset():
         experimental_df = pd.read_excel(CONFIG['EXPERIMENTAL_DATA'])
         experimental_df.rename(columns={'Dye': 'File', 'expPCE': 'PCE'}, inplace=True)
 
-        # Calculate Mordred descriptors
+        # Calculate molecular descriptors
         logger.info("Calculating molecular descriptors...")
         mordred_descriptors_list = []
         for mol_filename in os.listdir(CONFIG['MOL_DIR']):
@@ -226,7 +241,27 @@ def prepare_dataset():
                     desc['File'] = file_name
                     mordred_descriptors_list.append(desc)
 
+        if not mordred_descriptors_list:
+            raise ValueError("No valid molecular descriptors were calculated")
+
         mordred_df = pd.DataFrame(mordred_descriptors_list)
+
+        # Remove columns with all NaN values or constant values
+        # But ensure we keep 'Mass' and 'SMILES' columns
+        essential_columns = ['Mass', 'SMILES', 'File']
+        other_columns = [col for col in mordred_df.columns if col not in essential_columns]
+
+        # Only clean non-essential columns
+        mordred_df_cleaned = mordred_df[essential_columns].copy()
+        temp_df = mordred_df[other_columns].copy()
+
+        # Remove problematic columns from non-essential columns only
+        temp_df = temp_df.dropna(axis=1, how='all')
+        constant_cols = temp_df.columns[temp_df.nunique() == 1]
+        temp_df = temp_df.drop(columns=constant_cols)
+
+        # Combine back with essential columns
+        mordred_df = pd.concat([mordred_df_cleaned, temp_df], axis=1)
 
         # Normalize File columns
         for df in [dft_df, experimental_df, mordred_df]:
@@ -246,8 +281,16 @@ def prepare_dataset():
         raise
 
 
-def train_and_evaluate_model(data):
-    """Train and evaluate the Random Forest model."""
+def train_and_evaluate_model(data: pd.DataFrame) -> Tuple[RandomForestRegressor, pd.DataFrame, Dict]:
+    """
+    Train and evaluate the Random Forest model with comprehensive metrics.
+
+    Args:
+        data: Input DataFrame containing features and target
+
+    Returns:
+        Tuple containing (trained_model, results_dataframe, metrics_dict)
+    """
     try:
         # Prepare features and target
         excluded_columns = ['PCE', 'File', 'SMILES', 'expVoc_V', 'expIsc_mAcm-2', 'expFF']
@@ -258,9 +301,8 @@ def train_and_evaluate_model(data):
         y = data['PCE']
 
         # Split data
-        X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
-            X, y, data['File'],
-            test_size=CONFIG['TEST_SIZE'],
+        X_train, X_test, y_train, y_test = train_test_split(
+            X, y, test_size=CONFIG['TEST_SIZE'],
             random_state=CONFIG['RANDOM_STATE']
         )
 
@@ -269,91 +311,72 @@ def train_and_evaluate_model(data):
         X_train_scaled = scaler.fit_transform(X_train)
         X_test_scaled = scaler.transform(X_test)
 
-        # Train model
-        logger.info("Training Random Forest model...")
+        # Initialize model and evaluator
         rf_model = RandomForestRegressor(
-            n_estimators=CONFIG['N_ESTIMATORS'],
             random_state=CONFIG['RANDOM_STATE'],
+            n_estimators=CONFIG['N_ESTIMATORS'],
             n_jobs=CONFIG['N_JOBS'],
             max_features=CONFIG['MAX_FEATURES'],
             max_samples=CONFIG['MAX_SAMPLES'],
         )
+        evaluator = ModelEvaluator(n_splits=5, random_state=CONFIG['RANDOM_STATE'])
 
-        # Perform cross-validation
-        cv_scores = cross_val_score(
-            rf_model, X_train_scaled, y_train,
-            cv=CONFIG['CV_FOLDS']
-        )
-        logger.info(f"Cross-validation scores: {cv_scores}")
-        logger.info(f"Mean CV score: {cv_scores.mean():.4f} (±{cv_scores.std() * 2:.4f})")
-
-        # Train final model
+        # Train model
+        logger.info("Training Random Forest model...")
         rf_model.fit(X_train_scaled, y_train)
 
-        # Feature selection
-        selector = SelectFromModel(rf_model, prefit=True)
-        selected_features = X_train.columns[selector.get_support()].tolist()
-        logger.info(f"Selected features: {selected_features}")
+        # Evaluate model
+        train_metrics, test_metrics = evaluator.evaluate_split_performance(
+            rf_model, X_train_scaled, X_test_scaled, y_train, y_test
+        )
 
-        # Save model
-        joblib.dump(rf_model, CONFIG['MODEL_OUTPUT'])
+        # Perform cross-validation
+        cv_results = evaluator.cross_validate(rf_model, X_train_scaled, y_train)
 
-        # Predictions and evaluation
-        y_pred_test = rf_model.predict(X_test_scaled)
-        mae = mean_absolute_error(y_test, y_pred_test)
-        rmse = np.sqrt(mean_squared_error(y_test, y_pred_test))
+        # Compile all metrics
+        metrics = {
+            'train': dataclasses.asdict(train_metrics),
+            'test': dataclasses.asdict(test_metrics),
+            'cv': {
+                'r2_mean': float(np.mean(cv_results['r2'])),
+                'r2_std': float(np.std(cv_results['r2'])),
+                'rmse_mean': float(np.mean(cv_results['neg_rmse'])),
+                'rmse_std': float(np.std(cv_results['neg_rmse'])),
+                'mae_mean': float(np.mean(cv_results['neg_mae'])),
+                'mae_std': float(np.std(cv_results['neg_mae']))
+            }
+        }
 
-        logger.info(f"Model Performance - MAE: {mae:.4f}, RMSE: {rmse:.4f}")
 
-        # Prepare comprehensive results
-        data_scaled = scaler.transform(X)
-        data['Predicted_PCE'] = rf_model.predict(data_scaled)
-        data['Prediction_Error'] = abs(data['Predicted_PCE'] - data['PCE'])
-        data['Prediction_Error_Percentage'] = (data['Prediction_Error'] / data['PCE']) * 100
-        data['Prediction_Accuracy_Percentage'] = abs(100 - data['Prediction_Error_Percentage'])
+        # Log performance metrics
+        logger.info("\nModel Performance:")
+        logger.info(f"Test R²: {test_metrics.r2:.4f}")
+        logger.info(f"Test Adjusted R²: {test_metrics.adjusted_r2:.4f}")
+        logger.info(f"Test RMSE: {test_metrics.rmse:.4f}")
+        logger.info(f"Test MAE: {test_metrics.mae:.4f}")
+        logger.info(f"Cross-validation R² (mean ± std): {metrics['cv']['r2_mean']:.4f} ± {metrics['cv']['r2_std']:.4f}")
 
-        # Add mean values for prediction metrics
-        metrics_mean = data[['Prediction_Error', 'Prediction_Error_Percentage',
-                             'Prediction_Accuracy_Percentage']].mean()
-        logger.info(f"Mean Prediction Metrics:\n{metrics_mean}")
+        # Prepare results DataFrame
+        results = data.copy()
+        results_scaled = scaler.transform(X)
+        results['Predicted_PCE'] = rf_model.predict(results_scaled)
 
-        # Add dataset split labels
-        data['Dataset'] = 'Training'
-        data.loc[data['File'].isin(test_files), 'Dataset'] = 'Testing'
-
-        # Feature importance
-        feature_importance = pd.DataFrame({
-            'feature': feature_columns,
-            'importance': rf_model.feature_importances_
-        }).sort_values('importance', ascending=False)
-
-        feature_importance.to_excel(CONFIG['FEATURE_IMPORTANCE'], index=False)
-
-        # Reorder columns
-        column_order = [
-                           'File', 'PCE', 'Predicted_PCE', 'Prediction_Error',
-                           'Prediction_Error_Percentage', 'Prediction_Accuracy_Percentage', 'Dataset'
-                       ] + [col for col in data.columns if col not in [
-            'File', 'PCE', 'Predicted_PCE', 'Prediction_Error',
-            'Prediction_Error_Percentage', 'Prediction_Accuracy_Percentage', 'Dataset'
-        ]]
-
-        data = data[column_order]
-
-        return data, feature_importance
+        return rf_model, results, metrics
 
     except Exception as e:
         logger.error(f"Error in model training and evaluation: {e}")
         raise
 
+
 def main():
     """Main execution function for the PCE prediction pipeline."""
     try:
-        # Start time
         start_time = datetime.now()
         logger.info(f"Starting PCE prediction pipeline at {start_time}")
 
-        # Validate directories
+        # Initialize execution logger
+        execution_logger = ExecutionLogger()
+
         validate_directories()
 
         # Prepare dataset
@@ -366,31 +389,22 @@ def main():
 
         # Train model and get results
         logger.info("Training model and generating predictions...")
-        results, feature_importance = train_and_evaluate_model(data)
+        model, results, metrics = train_and_evaluate_model(data)
+
+        # Save model and execution info
+        model_path = execution_logger.save_model(model)
+        logger.info(f"Model saved to: {model_path}")
+
+        # Add execution metadata to metrics
+        metrics['execution_time'] = str(datetime.now() - start_time)
+        info_path = execution_logger.save_execution_info(CONFIG, metrics)
+        logger.info(f"Execution info saved to: {info_path}")
 
         # Save results
         logger.info("Saving results...")
         results.to_excel(CONFIG['COMPREHENSIVE_RESULTS'], index=False)
 
-        # Calculate and log execution time
-        end_time = datetime.now()
-        execution_time = end_time - start_time
-        logger.info(f"Pipeline completed. Total execution time: {execution_time}")
-
-        # Print summary statistics
-        logger.info("\nSummary Statistics:")
-        logger.info("-" * 50)
-        logger.info(f"Total number of compounds: {len(results)}")
-        logger.info(f"Training set size: {len(results[results['Dataset'] == 'Training'])}")
-        logger.info(f"Test set size: {len(results[results['Dataset'] == 'Testing'])}")
-        logger.info("\nPrediction Metrics:")
-        logger.info(f"Mean Prediction Error: {results['Prediction_Error'].mean():.4f}")
-        logger.info(f"Mean Prediction Accuracy: {results['Prediction_Accuracy_Percentage'].mean():.2f}%")
-
-        # Print top features
-        logger.info("\nTop 10 Most Important Features:")
-        for idx, row in feature_importance.head(10).iterrows():
-            logger.info(f"{row['feature']}: {row['importance']:.4f}")
+        logger.info(f"Pipeline completed. Total execution time: {metrics['execution_time']}")
 
         return True
 
@@ -399,89 +413,5 @@ def main():
         return False
 
 
-def run_additional_analysis():
-    """
-    Run additional analysis for different DFT methods and solvation conditions.
-    This addresses the TODOs from the original code.
-    """
-    try:
-        # List of DFT methods to analyze
-        dft_methods = ['LDA', 'PBE', 'B3LYP']
-
-        # List of solvation conditions
-        solvation_conditions = [
-            'experimental',  # Matches experimental protocols
-            'ethanol',  # Unified ethanol solvation
-            'gas'  # Gas phase calculations
-        ]
-
-        results_summary = []
-
-        for method in dft_methods:
-            for solvation in solvation_conditions:
-                logger.info(f"\nProcessing {method} with {solvation} solvation...")
-
-                # Update configuration for current analysis
-                current_config = CONFIG.copy()
-                current_config.update({
-                    'DFT_OUTPUT_DIR': f'./outputs_{method}_{solvation}',
-                    'MOL_DIR': f'./mol_{method}_{solvation}',
-                    'DFT_DATASET': f'dyes_DFT_{method}_{solvation}_dataset.xlsx',
-                    'COMPREHENSIVE_RESULTS': f'dyes_comprehensive_PCE_results_{method}_{solvation}.xlsx',
-                    'MODEL_OUTPUT': f'pce_prediction_model_{method}_{solvation}.joblib',
-                    'FEATURE_IMPORTANCE': f'feature_importance_{method}_{solvation}.xlsx'
-                })
-
-                # Skip if directory doesn't exist
-                if not os.path.exists(current_config['DFT_OUTPUT_DIR']):
-                    logger.warning(f"Directory {current_config['DFT_OUTPUT_DIR']} not found. Skipping...")
-                    continue
-
-                try:
-                    # Prepare dataset
-                    data = prepare_dataset()
-                    data = calculate_descriptors(data, CONSTANTS)
-
-                    # Train model and get results
-                    results, _ = train_and_evaluate_model(data)
-
-                    # Collect summary statistics
-                    summary = {
-                        'Method': method,
-                        'Solvation': solvation,
-                        'Mean_Prediction_Error': results['Prediction_Error'].mean(),
-                        'Mean_Prediction_Accuracy': results['Prediction_Accuracy_Percentage'].mean(),
-                        'RMSE': np.sqrt(mean_squared_error(results['PCE'], results['Predicted_PCE'])),
-                        'MAE': mean_absolute_error(results['PCE'], results['Predicted_PCE'])
-                    }
-
-                    results_summary.append(summary)
-
-                except Exception as e:
-                    logger.error(f"Error processing {method} with {solvation} solvation: {e}")
-                    continue
-
-        # Create summary DataFrame and save
-        if results_summary:
-            summary_df = pd.DataFrame(results_summary)
-            summary_df.to_excel('method_comparison_summary.xlsx', index=False)
-            logger.info("\nMethod Comparison Summary:")
-            logger.info(summary_df.to_string())
-
-        return True
-
-    except Exception as e:
-        logger.error(f"Error in additional analysis: {e}")
-        return False
-
-
 if __name__ == "__main__":
-    # Run main pipeline
-    success = main()
-
-    if success:
-        # Run additional analysis if main pipeline succeeds
-        logger.info("\nStarting additional analysis for different methods and solvation conditions...")
-        run_additional_analysis()
-    else:
-        logger.error("Main pipeline failed. Skipping additional analysis.")
+    main()
