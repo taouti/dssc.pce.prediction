@@ -1,0 +1,52 @@
+=== Execution Information ===
+Timestamp: 2024.12.21_09-56-49
+
+Total number of compounds: 24
+Training set size: 20
+Test set size: 4
+
+=== Configuration ===
+{
+  "DFT_OUTPUT_DIR": "./outputs_PBE_ethanol",
+  "MOL_DIR": "./mol_PBE_ethanol",
+  "EXPERIMENTAL_DATA": "dyes_experimental_dataset.xlsx",
+  "DFT_DATASET": "dyes_DFT_PBE_eth_dataset.xlsx",
+  "COMPREHENSIVE_RESULTS": "PCE_results_PBE_eth.xlsx",
+  "MODEL_OUTPUT": "pce_prediction_model_PBE_eth.joblib",
+  "TEST_SIZE": 0.15,
+  "RANDOM_STATE": 0,
+  "N_ESTIMATORS": 100,
+  "CV_FOLDS": 5,
+  "N_JOBS": -1,
+  "MAX_FEATURES": "sqrt",
+  "MAX_SAMPLES": 0.6
+}
+
+=== Performance Metrics ===
+{
+  "train": {
+    "r2": 0.738554132766819,
+    "adjusted_r2": 1.4515883161300398,
+    "rmse": 0.008110803492872942,
+    "mae": 0.006296599999999994,
+    "std_residuals": 0.008110579338740233,
+    "mean_residuals": 6.029999999999482e-05
+  },
+  "test": {
+    "r2": 0.35722039030078634,
+    "adjusted_r2": 1.071419956633246,
+    "rmse": 0.015305850629742853,
+    "mae": 0.012560499999999987,
+    "std_residuals": 0.014126545623399933,
+    "mean_residuals": 0.0058914999999999905
+  },
+  "cv": {
+    "r2_mean": -0.42501216309422823,
+    "r2_std": 1.2781162270403144,
+    "rmse_mean": -0.013501087115389577,
+    "rmse_std": 0.004172004512540914,
+    "mae_mean": 0.01163255,
+    "mae_std": 0.004360257545145695
+  },
+  "execution_time": "0:00:09.004766"
+}

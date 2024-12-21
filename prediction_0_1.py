@@ -27,19 +27,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Keyword Configuration
+DFT_METHOD = 'PBE'
+
 # File and Directory Configuration
 CONFIG = {
     # Input Directories
-    'DFT_OUTPUT_DIR': './outputs_PBE_ethanol',
-    'MOL_DIR': './mol_PBE_ethanol',
+    'DFT_OUTPUT_DIR': f'./outputs_{DFT_METHOD}_ethanol',
+    'MOL_DIR': f'./mol_{DFT_METHOD}_ethanol',
 
     # Input Files
     'EXPERIMENTAL_DATA': 'dyes_experimental_dataset.xlsx',
 
     # Output Files
-    'DFT_DATASET': 'dyes_DFT_PBE_eth_dataset.xlsx',
-    'COMPREHENSIVE_RESULTS': 'PCE_results_PBE_eth.xlsx',
-    'MODEL_OUTPUT': 'pce_prediction_model_PBE_eth.joblib',
+    'DFT_DATASET': f'dyes_DFT_{DFT_METHOD}_eth_dataset.xlsx',
+    'COMPREHENSIVE_RESULTS': f'PCE_results_{DFT_METHOD}_eth.xlsx',
+    'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
 
     # Model Parameters
     'TEST_SIZE': 0.15,
@@ -50,6 +53,7 @@ CONFIG = {
     'MAX_FEATURES': 'sqrt',
     'MAX_SAMPLES': 0.6,
 }
+
 
 # Physical Constants
 CONSTANTS = {
@@ -301,8 +305,9 @@ def train_and_evaluate_model(data: pd.DataFrame) -> Tuple[RandomForestRegressor,
         y = data['PCE']
 
         # Split data
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=CONFIG['TEST_SIZE'],
+        X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
+            X, y, data['File'],
+            test_size=CONFIG['TEST_SIZE'],
             random_state=CONFIG['RANDOM_STATE']
         )
 
@@ -347,7 +352,6 @@ def train_and_evaluate_model(data: pd.DataFrame) -> Tuple[RandomForestRegressor,
             }
         }
 
-
         # Log performance metrics
         logger.info("\nModel Performance:")
         logger.info(f"Test R²: {test_metrics.r2:.4f}")
@@ -360,6 +364,21 @@ def train_and_evaluate_model(data: pd.DataFrame) -> Tuple[RandomForestRegressor,
         results = data.copy()
         results_scaled = scaler.transform(X)
         results['Predicted_PCE'] = rf_model.predict(results_scaled)
+        results['Prediction_Error'] = abs(results['Predicted_PCE'] - results['PCE'])
+
+        # Add dataset split labels
+        results['Dataset'] = 'Training'
+        results.loc[results['File'].isin(test_files), 'Dataset'] = 'Testing'
+
+        # Reorder columns
+        column_order = [
+                           'File', 'PCE', 'Predicted_PCE', 'Prediction_Error', 'Dataset'
+                       ] + [col for col in data.columns if col not in [
+            'File', 'PCE', 'Predicted_PCE', 'Prediction_Error', 'Dataset'
+        ]]
+
+        results = results[column_order]
+
 
         return rf_model, results, metrics
 
@@ -375,7 +394,7 @@ def main():
         logger.info(f"Starting PCE prediction pipeline at {start_time}")
 
         # Initialize execution logger
-        execution_logger = ExecutionLogger()
+        execution_logger = ExecutionLogger(DFT_METHOD)
 
         validate_directories()
 
@@ -397,12 +416,17 @@ def main():
 
         # Add execution metadata to metrics
         metrics['execution_time'] = str(datetime.now() - start_time)
-        info_path = execution_logger.save_execution_info(CONFIG, metrics)
+        info_path = execution_logger.save_execution_info(CONFIG, metrics, results)
         logger.info(f"Execution info saved to: {info_path}")
 
         # Save results
         logger.info("Saving results...")
         results.to_excel(CONFIG['COMPREHENSIVE_RESULTS'], index=False)
+
+        # Save results file in the logging directory
+        results_file_path = CONFIG['COMPREHENSIVE_RESULTS']
+        results_log_path = execution_logger.save_results_file(results_file_path)
+        logger.info(f"Results file saved to: {results_log_path}")
 
         logger.info(f"Pipeline completed. Total execution time: {metrics['execution_time']}")
 

@@ -1,0 +1,4 @@
+=== Execution Information ===
+Timestamp: 2024.12.21_09-44-58
+
+Total number of compounds: 24
