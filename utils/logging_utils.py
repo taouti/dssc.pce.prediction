@@ -50,21 +50,18 @@ class ExecutionLogger:
         joblib.dump(model, model_path)
         return model_path
 
-    def save_execution_info(self, config: dict, metrics: dict, results: pd.DataFrame, prefix: str = "notion") -> Path:
+    def save_execution_info(self, config: dict, metrics: dict, results: dict, prefix: str = "notion") -> Path:
         """
-        Save configuration and results.
+        Save configuration and results for multiple models.
 
         Args:
             config (dict): Configuration used for the execution
-            metrics (dict): Performance metrics
+            metrics (dict): Dictionary containing metrics for each model
+            results (dict): Dictionary containing results DataFrames for each model
             prefix (str): Prefix for the info file
 
         Returns:
             Path: Path where info was saved
-            :param prefix:
-            :param config:
-            :param metrics:
-            :param results:
         """
         timestamp = self._get_millisecond_timestamp()
         info_path = self.execution_dir / f"{prefix}-{timestamp}.txt"
@@ -72,16 +69,25 @@ class ExecutionLogger:
         with open(info_path, 'w') as f:
             f.write("=== Execution Information ===\n")
             f.write(f"Timestamp: {self.timestamp.strftime('%Y.%m.%d_%H-%M-%S')}\n\n")
-            f.write(f"Total number of compounds: {len(results)}\n")
-            f.write(f"Training set size: {len(results[results['Dataset'] == 'Training'])}\n")
-            f.write(f"Test set size: {len(results[results['Dataset'] == 'Testing'])}\n\n")
 
-            f.write("=== Configuration ===\n")
+            # Write dataset information for each model
+            f.write("=== Dataset Information ===\n")
+            for model_name, model_results in results.items():
+                f.write(f"\n{model_name} Model:\n")
+                f.write(f"Total number of compounds: {len(model_results)}\n")
+                f.write(f"Training set size: {len(model_results[model_results['Dataset'] == 'Training'])}\n")
+                f.write(f"Test set size: {len(model_results[model_results['Dataset'] == 'Testing'])}\n")
+
+            # Write configuration
+            f.write("\n=== Configuration ===\n")
             f.write(json.dumps(config, indent=2))
-            f.write("\n\n")
 
-            f.write("=== Performance Metrics ===\n")
-            f.write(json.dumps(metrics, indent=2))
+            # Write performance metrics for each model
+            f.write("\n\n=== Performance Metrics ===\n")
+            for model_name, model_metrics in metrics.items():
+                f.write(f"\n{model_name} Model:\n")
+                f.write(json.dumps(model_metrics, indent=2))
+                f.write("\n")
 
         return info_path
 

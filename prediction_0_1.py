@@ -1,20 +1,20 @@
-import dataclasses
 import os
 import re
 import logging
-from typing import Tuple, Dict
 import pandas as pd
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import Descriptors
 from mordred import Calculator
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from datetime import datetime
 
+#from prediction_1 import rf_model
 from utils.logging_utils import ExecutionLogger
-from utils.regression_metrics_utils import ModelEvaluator
+#from utils.rf_pce_model import RfPCEModel
+from utils.prediction_model_classes import (
+    RfPCEModel,
+    XGBoostPCEModel
+)
 
 # Setup logging
 logging.basicConfig(
@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Keyword Configuration
-DFT_METHOD = 'PBE'
+DFT_METHOD = 'B3LYP'
 
 # File and Directory Configuration
 CONFIG = {
@@ -45,7 +45,7 @@ CONFIG = {
     'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
 
     # Model Parameters
-    'TEST_SIZE': 0.15,
+    'TEST_SIZE': 0.1,
     'RANDOM_STATE': 0,
     'N_ESTIMATORS': 100,
     'CV_FOLDS': 5,
@@ -285,108 +285,6 @@ def prepare_dataset():
         raise
 
 
-def train_and_evaluate_model(data: pd.DataFrame) -> Tuple[RandomForestRegressor, pd.DataFrame, Dict]:
-    """
-    Train and evaluate the Random Forest model with comprehensive metrics.
-
-    Args:
-        data: Input DataFrame containing features and target
-
-    Returns:
-        Tuple containing (trained_model, results_dataframe, metrics_dict)
-    """
-    try:
-        # Prepare features and target
-        excluded_columns = ['PCE', 'File', 'SMILES', 'expVoc_V', 'expIsc_mAcm-2', 'expFF']
-        numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
-        feature_columns = [col for col in numeric_columns if col not in excluded_columns]
-
-        X = data[feature_columns]
-        y = data['PCE']
-
-        # Split data
-        X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
-            X, y, data['File'],
-            test_size=CONFIG['TEST_SIZE'],
-            random_state=CONFIG['RANDOM_STATE']
-        )
-
-        # Scale features
-        scaler = StandardScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test)
-
-        # Initialize model and evaluator
-        rf_model = RandomForestRegressor(
-            random_state=CONFIG['RANDOM_STATE'],
-            n_estimators=CONFIG['N_ESTIMATORS'],
-            n_jobs=CONFIG['N_JOBS'],
-            max_features=CONFIG['MAX_FEATURES'],
-            max_samples=CONFIG['MAX_SAMPLES'],
-        )
-        evaluator = ModelEvaluator(n_splits=5, random_state=CONFIG['RANDOM_STATE'])
-
-        # Train model
-        logger.info("Training Random Forest model...")
-        rf_model.fit(X_train_scaled, y_train)
-
-        # Evaluate model
-        train_metrics, test_metrics = evaluator.evaluate_split_performance(
-            rf_model, X_train_scaled, X_test_scaled, y_train, y_test
-        )
-
-        # Perform cross-validation
-        cv_results = evaluator.cross_validate(rf_model, X_train_scaled, y_train)
-
-        # Compile all metrics
-        metrics = {
-            'train': dataclasses.asdict(train_metrics),
-            'test': dataclasses.asdict(test_metrics),
-            'cv': {
-                'r2_mean': float(np.mean(cv_results['r2'])),
-                'r2_std': float(np.std(cv_results['r2'])),
-                'rmse_mean': float(np.mean(cv_results['neg_rmse'])),
-                'rmse_std': float(np.std(cv_results['neg_rmse'])),
-                'mae_mean': float(np.mean(cv_results['neg_mae'])),
-                'mae_std': float(np.std(cv_results['neg_mae']))
-            }
-        }
-
-        # Log performance metrics
-        logger.info("\nModel Performance:")
-        logger.info(f"Test R²: {test_metrics.r2:.4f}")
-        logger.info(f"Test Adjusted R²: {test_metrics.adjusted_r2:.4f}")
-        logger.info(f"Test RMSE: {test_metrics.rmse:.4f}")
-        logger.info(f"Test MAE: {test_metrics.mae:.4f}")
-        logger.info(f"Cross-validation R² (mean ± std): {metrics['cv']['r2_mean']:.4f} ± {metrics['cv']['r2_std']:.4f}")
-
-        # Prepare results DataFrame
-        results = data.copy()
-        results_scaled = scaler.transform(X)
-        results['Predicted_PCE'] = rf_model.predict(results_scaled)
-        results['Prediction_Error'] = abs(results['Predicted_PCE'] - results['PCE'])
-
-        # Add dataset split labels
-        results['Dataset'] = 'Training'
-        results.loc[results['File'].isin(test_files), 'Dataset'] = 'Testing'
-
-        # Reorder columns
-        column_order = [
-                           'File', 'PCE', 'Predicted_PCE', 'Prediction_Error', 'Dataset'
-                       ] + [col for col in data.columns if col not in [
-            'File', 'PCE', 'Predicted_PCE', 'Prediction_Error', 'Dataset'
-        ]]
-
-        results = results[column_order]
-
-
-        return rf_model, results, metrics
-
-    except Exception as e:
-        logger.error(f"Error in model training and evaluation: {e}")
-        raise
-
-
 def main():
     """Main execution function for the PCE prediction pipeline."""
     try:
@@ -406,29 +304,123 @@ def main():
         logger.info("Calculating additional descriptors...")
         data = calculate_descriptors(data, CONSTANTS)
 
-        # Train model and get results
-        logger.info("Training model and generating predictions...")
-        model, results, metrics = train_and_evaluate_model(data)
+        # Initialize models
+        models = {
+            'RF': RfPCEModel(
+                test_size=CONFIG['TEST_SIZE'],
+                random_state=CONFIG['RANDOM_STATE'],
+                n_estimators=CONFIG['N_ESTIMATORS'],
+                n_jobs=CONFIG['N_JOBS'],
+                max_features=CONFIG['MAX_FEATURES'],
+                max_samples=CONFIG['MAX_SAMPLES'],
+                cv_folds=CONFIG['CV_FOLDS']
+            ),
+            'XGBoost': XGBoostPCEModel(
+                test_size=CONFIG['TEST_SIZE'],
+                random_state=CONFIG['RANDOM_STATE'],
+                n_estimators=CONFIG['N_ESTIMATORS'],
+                learning_rate=0.1,
+                max_depth=6,
+                cv_folds=CONFIG['CV_FOLDS']
+            )
+        }
 
-        # Save model and execution info
-        model_path = execution_logger.save_model(model)
-        logger.info(f"Model saved to: {model_path}")
+        # Dictionary to store results for each model
+        all_metrics = {}
+        all_results = {}
+        execution_times = {}
 
-        # Add execution metadata to metrics
-        metrics['execution_time'] = str(datetime.now() - start_time)
-        info_path = execution_logger.save_execution_info(CONFIG, metrics, results)
-        logger.info(f"Execution info saved to: {info_path}")
+        # Train and evaluate each model
+        for model_name, model in models.items():
+            logger.info(f"\nTraining {model_name} model and generating predictions...")
+            model_start_time = datetime.now()
 
-        # Save results
-        logger.info("Saving results...")
-        results.to_excel(CONFIG['COMPREHENSIVE_RESULTS'], index=False)
+            metrics, results = model.train(data)
 
-        # Save results file in the logging directory
-        results_file_path = CONFIG['COMPREHENSIVE_RESULTS']
-        results_log_path = execution_logger.save_results_file(results_file_path)
-        logger.info(f"Results file saved to: {results_log_path}")
+            model_end_time = datetime.now()
+            execution_time = str(model_end_time - model_start_time)
+            execution_times[model_name] = execution_time
 
-        logger.info(f"Pipeline completed. Total execution time: {metrics['execution_time']}")
+            # Store results
+            all_metrics[model_name] = metrics
+            all_results[model_name] = results
+
+            # Get and log feature importance
+            try:
+                feature_importance = model.get_feature_importance()
+                logger.info(f"\nTop 10 Most Important Features ({model_name}):")
+                logger.info(feature_importance.head(10))
+            except ValueError as e:
+                logger.info(f"Feature importance not available for {model_name}: {str(e)}")
+
+            # Log performance metrics
+            logger.info(f"\n{model_name} Model Performance:")
+            logger.info(f"Test R²: {metrics['test']['r2']:.4f}")
+            logger.info(f"Test Adjusted R²: {metrics['test']['adjusted_r2']:.4f}")
+            logger.info(f"Test RMSE: {metrics['test']['rmse']:.4f}")
+            logger.info(f"Test MAE: {metrics['test']['mae']:.4f}")
+            logger.info(
+                f"Cross-validation R² (mean ± std): {metrics['cv']['r2_mean']:.4f} ± {metrics['cv']['r2_std']:.4f}")
+            logger.info(f"Execution time: {execution_time}")
+
+            # Save model
+            model_filename = f"pce_prediction_model_{model_name}_{DFT_METHOD}_eth.joblib"
+            model_path = execution_logger.save_model(model.model, model_filename)
+            logger.info(f"{model_name} model saved to: {model_path}")
+
+            # Save results for each model
+            results_filename = f"PCE_results_{model_name}_{DFT_METHOD}_eth.xlsx"
+            results.to_excel(results_filename, index=False)
+            results_log_path = execution_logger.save_results_file(results_filename)
+            logger.info(f"{model_name} results file saved to: {results_log_path}")
+
+        # Add execution times to metrics
+        total_execution_time = str(datetime.now() - start_time)
+        for model_name in all_metrics:
+            all_metrics[model_name]['execution_time'] = execution_times[model_name]
+
+        # Save comprehensive execution info including all models
+        comprehensive_info = {
+            'config': CONFIG,
+            'metrics': all_metrics,
+            'total_execution_time': total_execution_time
+        }
+
+        info_path = execution_logger.save_execution_info(
+            comprehensive_info,
+            all_metrics,
+            all_results
+        )
+        logger.info(f"Comprehensive execution info saved to: {info_path}")
+
+        # Create and save a comparison summary
+        comparison_df = pd.DataFrame({
+            'Model': [],
+            'Test_R2': [],
+            'Test_RMSE': [],
+            'Test_MAE': [],
+            'CV_R2_Mean': [],
+            'CV_R2_Std': [],
+            'Execution_Time': []
+        })
+
+        for model_name, metrics in all_metrics.items():
+            comparison_df = pd.concat([comparison_df, pd.DataFrame({
+                'Model': [model_name],
+                'Test_R2': [metrics['test']['r2']],
+                'Test_RMSE': [metrics['test']['rmse']],
+                'Test_MAE': [metrics['test']['mae']],
+                'CV_R2_Mean': [metrics['cv']['r2_mean']],
+                'CV_R2_Std': [metrics['cv']['r2_std']],
+                'Execution_Time': [metrics['execution_time']]
+            })], ignore_index=True)
+
+        comparison_filename = f"model_comparison_{DFT_METHOD}_eth.xlsx"
+        comparison_df.to_excel(comparison_filename, index=False)
+        comparison_log_path = execution_logger.save_results_file(comparison_filename)
+        logger.info(f"\nModel comparison saved to: {comparison_log_path}")
+
+        logger.info(f"\nPipeline completed. Total execution time: {total_execution_time}")
 
         return True
 

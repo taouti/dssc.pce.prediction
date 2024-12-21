@@ -1586,3 +1586,445 @@ Model Performance:
 2024-12-21 10:54:22,562 - INFO - Saving results...
 2024-12-21 10:54:22,607 - INFO - Results file saved to: log\ex_21.12.24_10-54_PBE\PCE_results_PBE_eth.xlsx
 2024-12-21 10:54:22,607 - INFO - Pipeline completed. Total execution time: 0:00:04.191804
+2024-12-21 15:38:13,061 - INFO - Starting PCE prediction pipeline at 2024-12-21 15:38:13.061886
+2024-12-21 15:38:13,063 - INFO - Preparing dataset...
+2024-12-21 15:38:13,063 - INFO - Extracting DFT data...
+2024-12-21 15:38:17,204 - INFO - Loading experimental data...
+2024-12-21 15:38:17,226 - INFO - Calculating molecular descriptors...
+2024-12-21 15:38:17,312 - INFO - Calculating additional descriptors...
+2024-12-21 15:38:17,316 - INFO - Training model and generating predictions...
+2024-12-21 15:38:19,620 - INFO - 
+Top 10 Most Important Features:
+2024-12-21 15:38:19,620 - INFO -                 Feature  Importance
+2         Dipole_Moment    0.089320
+19        deltaE_RedOxH    0.077778
+21                   IP    0.061046
+5       Surface_Area_A2    0.057038
+16            RingCount    0.054687
+12                 TPSA    0.053280
+6   Molecular_Volume_A3    0.050741
+0                  HOMO    0.040299
+9             Max_f_osc    0.036324
+15       HBondAcceptors    0.034567
+2024-12-21 15:38:19,636 - INFO - 
+Model Performance:
+2024-12-21 15:38:19,636 - INFO - Test R²: 0.3536
+2024-12-21 15:38:19,636 - INFO - Test Adjusted R²: 1.0718
+2024-12-21 15:38:19,636 - INFO - Test RMSE: 0.0153
+2024-12-21 15:38:19,636 - INFO - Test MAE: 0.0125
+2024-12-21 15:38:19,636 - INFO - Cross-validation R² (mean ± std): -0.4297 ± 1.2647
+2024-12-21 15:38:19,653 - INFO - Model saved to: log\ex_21.12.24_15-38_PBE\model-1734791899636.joblib
+2024-12-21 15:38:19,656 - INFO - Execution info saved to: log\ex_21.12.24_15-38_PBE\notion-1734791899653.txt
+2024-12-21 15:38:19,656 - INFO - Saving results...
+2024-12-21 15:38:19,744 - INFO - Results file saved to: log\ex_21.12.24_15-38_PBE\PCE_results_PBE_eth.xlsx
+2024-12-21 15:38:19,744 - INFO - Pipeline completed. Total execution time: 0:00:06.574128
+2024-12-21 15:41:44,797 - INFO - Starting PCE prediction pipeline at 2024-12-21 15:41:44.797101
+2024-12-21 15:41:44,798 - INFO - Preparing dataset...
+2024-12-21 15:41:44,798 - INFO - Extracting DFT data...
+2024-12-21 15:41:47,933 - INFO - Loading experimental data...
+2024-12-21 15:41:47,941 - INFO - Calculating molecular descriptors...
+2024-12-21 15:41:48,010 - INFO - Calculating additional descriptors...
+2024-12-21 15:41:48,016 - INFO - Training model and generating predictions...
+2024-12-21 15:41:50,313 - INFO - 
+Top 10 Most Important Features:
+2024-12-21 15:41:50,313 - INFO -                 Feature  Importance
+2         Dipole_Moment    0.089320
+19        deltaE_RedOxH    0.077778
+21                   IP    0.061046
+5       Surface_Area_A2    0.057038
+16            RingCount    0.054687
+12                 TPSA    0.053280
+6   Molecular_Volume_A3    0.050741
+0                  HOMO    0.040299
+9             Max_f_osc    0.036324
+15       HBondAcceptors    0.034567
+2024-12-21 15:41:50,318 - INFO - 
+Model Performance:
+2024-12-21 15:41:50,318 - INFO - Test R²: 0.3536
+2024-12-21 15:41:50,318 - INFO - Test Adjusted R²: 1.0718
+2024-12-21 15:41:50,318 - INFO - Test RMSE: 0.0153
+2024-12-21 15:41:50,318 - INFO - Test MAE: 0.0125
+2024-12-21 15:41:50,318 - INFO - Cross-validation R² (mean ± std): -0.4297 ± 1.2647
+2024-12-21 15:41:50,331 - INFO - Model saved to: log\ex_21.12.24_15-41_PBE\model-1734792110318.joblib
+2024-12-21 15:41:50,333 - INFO - Execution info saved to: log\ex_21.12.24_15-41_PBE\notion-1734792110331.txt
+2024-12-21 15:41:50,333 - INFO - Saving results...
+2024-12-21 15:41:50,449 - INFO - Results file saved to: log\ex_21.12.24_15-41_PBE\PCE_results_PBE_eth.xlsx
+2024-12-21 15:41:50,449 - INFO - Pipeline completed. Total execution time: 0:00:05.521505
+2024-12-21 15:42:11,321 - INFO - Starting PCE prediction pipeline at 2024-12-21 15:42:11.321993
+2024-12-21 15:42:11,322 - INFO - Preparing dataset...
+2024-12-21 15:42:11,322 - INFO - Extracting DFT data...
+2024-12-21 15:42:14,589 - INFO - Loading experimental data...
+2024-12-21 15:42:14,596 - INFO - Calculating molecular descriptors...
+2024-12-21 15:42:14,641 - INFO - Calculating additional descriptors...
+2024-12-21 15:42:14,644 - INFO - Training model and generating predictions...
+2024-12-21 15:42:16,584 - INFO - 
+Top 10 Most Important Features:
+2024-12-21 15:42:16,584 - INFO -                 Feature  Importance
+15       HBondAcceptors    0.073306
+12                 TPSA    0.072586
+21                   IP    0.064355
+19        deltaE_RedOxH    0.058996
+6   Molecular_Volume_A3    0.058034
+25    electronegativity    0.047314
+1                  LUMO    0.044057
+9             Max_f_osc    0.042441
+22                   EA    0.039839
+0                  HOMO    0.038019
+2024-12-21 15:42:16,587 - INFO - 
+Model Performance:
+2024-12-21 15:42:16,587 - INFO - Test R²: 0.7143
+2024-12-21 15:42:16,588 - INFO - Test Adjusted R²: 1.0204
+2024-12-21 15:42:16,588 - INFO - Test RMSE: 0.0073
+2024-12-21 15:42:16,588 - INFO - Test MAE: 0.0059
+2024-12-21 15:42:16,588 - INFO - Cross-validation R² (mean ± std): 0.1305 ± 0.2594
+2024-12-21 15:42:16,601 - INFO - Model saved to: log\ex_21.12.24_15-42_PBE\model-1734792136588.joblib
+2024-12-21 15:42:16,603 - INFO - Execution info saved to: log\ex_21.12.24_15-42_PBE\notion-1734792136601.txt
+2024-12-21 15:42:16,603 - INFO - Saving results...
+2024-12-21 15:42:16,697 - INFO - Results file saved to: log\ex_21.12.24_15-42_PBE\PCE_results_PBE_eth.xlsx
+2024-12-21 15:42:16,697 - INFO - Pipeline completed. Total execution time: 0:00:05.267002
+2024-12-21 15:58:21,300 - INFO - Starting PCE prediction pipeline at 2024-12-21 15:58:21.300886
+2024-12-21 15:58:21,300 - INFO - Preparing dataset...
+2024-12-21 15:58:21,300 - INFO - Extracting DFT data...
+2024-12-21 15:58:24,468 - INFO - Loading experimental data...
+2024-12-21 15:58:24,478 - INFO - Calculating molecular descriptors...
+2024-12-21 15:58:24,538 - INFO - Calculating additional descriptors...
+2024-12-21 15:58:24,541 - INFO - Training model and generating predictions...
+2024-12-21 15:58:26,636 - INFO - 
+Top 10 Most Important Features:
+2024-12-21 15:58:26,637 - INFO -                 Feature  Importance
+15       HBondAcceptors    0.073306
+12                 TPSA    0.072586
+21                   IP    0.064355
+19        deltaE_RedOxH    0.058996
+6   Molecular_Volume_A3    0.058034
+25    electronegativity    0.047314
+1                  LUMO    0.044057
+9             Max_f_osc    0.042441
+22                   EA    0.039839
+0                  HOMO    0.038019
+2024-12-21 15:58:26,646 - INFO - 
+Model Performance:
+2024-12-21 15:58:26,646 - INFO - Test R²: 0.7143
+2024-12-21 15:58:26,646 - INFO - Test Adjusted R²: 1.0204
+2024-12-21 15:58:26,646 - INFO - Test RMSE: 0.0073
+2024-12-21 15:58:26,646 - INFO - Test MAE: 0.0059
+2024-12-21 15:58:26,647 - INFO - Cross-validation R² (mean ± std): 0.1305 ± 0.2594
+2024-12-21 15:58:26,708 - INFO - Model saved to: log\ex_21.12.24_15-58_PBE\model-1734793106647.joblib
+2024-12-21 15:58:26,710 - INFO - Execution info saved to: log\ex_21.12.24_15-58_PBE\notion-1734793106708.txt
+2024-12-21 15:58:26,710 - INFO - Saving results...
+2024-12-21 15:58:26,761 - INFO - Results file saved to: log\ex_21.12.24_15-58_PBE\PCE_results_PBE_eth.xlsx
+2024-12-21 15:58:26,761 - INFO - Pipeline completed. Total execution time: 0:00:05.346841
+2024-12-21 16:11:22,559 - INFO - Starting PCE prediction pipeline at 2024-12-21 16:11:22.559126
+2024-12-21 16:11:22,560 - INFO - Preparing dataset...
+2024-12-21 16:11:22,560 - INFO - Extracting DFT data...
+2024-12-21 16:11:25,357 - INFO - Loading experimental data...
+2024-12-21 16:11:25,366 - INFO - Calculating molecular descriptors...
+2024-12-21 16:11:25,417 - INFO - Calculating additional descriptors...
+2024-12-21 16:11:25,419 - INFO - 
+Training RF model and generating predictions...
+2024-12-21 16:11:27,137 - INFO - 
+Top 10 Most Important Features (RF):
+2024-12-21 16:11:27,137 - INFO -                 Feature  Importance
+15       HBondAcceptors    0.073306
+12                 TPSA    0.072586
+21                   IP    0.064355
+19        deltaE_RedOxH    0.058996
+6   Molecular_Volume_A3    0.058034
+25    electronegativity    0.047314
+1                  LUMO    0.044057
+9             Max_f_osc    0.042441
+22                   EA    0.039839
+0                  HOMO    0.038019
+2024-12-21 16:11:27,142 - INFO - 
+RF Model Performance:
+2024-12-21 16:11:27,142 - INFO - Test R²: 0.7143
+2024-12-21 16:11:27,142 - INFO - Test Adjusted R²: 1.0204
+2024-12-21 16:11:27,142 - INFO - Test RMSE: 0.0073
+2024-12-21 16:11:27,142 - INFO - Test MAE: 0.0059
+2024-12-21 16:11:27,142 - INFO - Cross-validation R² (mean ± std): 0.1305 ± 0.2594
+2024-12-21 16:11:27,142 - INFO - Execution time: 0:00:01.654856
+2024-12-21 16:11:27,154 - INFO - RF model saved to: log\ex_21.12.24_16-11_PBE\pce_prediction_model_RF_PBE_eth.joblib-1734793887142.joblib
+2024-12-21 16:11:27,193 - INFO - RF results file saved to: log\ex_21.12.24_16-11_PBE\PCE_results_RF_PBE_eth.xlsx
+2024-12-21 16:11:27,193 - INFO - 
+Training XGBoost model and generating predictions...
+2024-12-21 16:11:27,654 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2024-12-21 16:11:27,655 - INFO -                 Feature  Importance
+19        deltaE_RedOxH    0.283372
+0                  HOMO    0.109567
+15       HBondAcceptors    0.078420
+6   Molecular_Volume_A3    0.065304
+23           elnChemPot    0.057014
+8     Max_Absorption_nm    0.055001
+22                   EA    0.051867
+5       Surface_Area_A2    0.050166
+12                 TPSA    0.048824
+2         Dipole_Moment    0.047152
+2024-12-21 16:11:27,659 - INFO - 
+XGBoost Model Performance:
+2024-12-21 16:11:27,659 - INFO - Test R²: 0.8894
+2024-12-21 16:11:27,659 - INFO - Test Adjusted R²: 1.0079
+2024-12-21 16:11:27,659 - INFO - Test RMSE: 0.0045
+2024-12-21 16:11:27,659 - INFO - Test MAE: 0.0043
+2024-12-21 16:11:27,660 - INFO - Cross-validation R² (mean ± std): -0.2095 ± 0.5551
+2024-12-21 16:11:27,660 - INFO - Execution time: 0:00:00.448580
+2024-12-21 16:11:27,662 - INFO - XGBoost model saved to: log\ex_21.12.24_16-11_PBE\pce_prediction_model_XGBoost_PBE_eth.joblib-1734793887660.joblib
+2024-12-21 16:11:27,697 - INFO - XGBoost results file saved to: log\ex_21.12.24_16-11_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2024-12-21 16:11:27,697 - INFO - 
+Training SVM model and generating predictions...
+2024-12-21 16:11:27,728 - INFO - Feature importance not available for SVM: Feature importance is only available for linear kernel
+2024-12-21 16:11:27,728 - INFO - 
+SVM Model Performance:
+2024-12-21 16:11:27,728 - INFO - Test R²: -0.3722
+2024-12-21 16:11:27,728 - INFO - Test Adjusted R²: 1.0980
+2024-12-21 16:11:27,728 - INFO - Test RMSE: 0.0159
+2024-12-21 16:11:27,728 - INFO - Test MAE: 0.0121
+2024-12-21 16:11:27,728 - INFO - Cross-validation R² (mean ± std): -0.1150 ± 0.1235
+2024-12-21 16:11:27,728 - INFO - Execution time: 0:00:00.031525
+2024-12-21 16:11:27,730 - INFO - SVM model saved to: log\ex_21.12.24_16-11_PBE\pce_prediction_model_SVM_PBE_eth.joblib-1734793887729.joblib
+2024-12-21 16:11:27,769 - INFO - SVM results file saved to: log\ex_21.12.24_16-11_PBE\PCE_results_SVM_PBE_eth.xlsx
+2024-12-21 16:11:27,770 - ERROR - Error in main execution: 'Dataset'
+2024-12-21 16:22:51,770 - INFO - Starting PCE prediction pipeline at 2024-12-21 16:22:51.770159
+2024-12-21 16:22:51,771 - INFO - Preparing dataset...
+2024-12-21 16:22:51,771 - INFO - Extracting DFT data...
+2024-12-21 16:22:54,565 - INFO - Loading experimental data...
+2024-12-21 16:22:54,571 - INFO - Calculating molecular descriptors...
+2024-12-21 16:22:54,616 - INFO - Calculating additional descriptors...
+2024-12-21 16:22:54,618 - INFO - 
+Training RF model and generating predictions...
+2024-12-21 16:22:56,164 - INFO - 
+Top 10 Most Important Features (RF):
+2024-12-21 16:22:56,165 - INFO -                 Feature  Importance
+15       HBondAcceptors    0.073306
+12                 TPSA    0.072586
+21                   IP    0.064355
+19        deltaE_RedOxH    0.058996
+6   Molecular_Volume_A3    0.058034
+25    electronegativity    0.047314
+1                  LUMO    0.044057
+9             Max_f_osc    0.042441
+22                   EA    0.039839
+0                  HOMO    0.038019
+2024-12-21 16:22:56,170 - INFO - 
+RF Model Performance:
+2024-12-21 16:22:56,170 - INFO - Test R²: 0.7143
+2024-12-21 16:22:56,170 - INFO - Test Adjusted R²: 1.0204
+2024-12-21 16:22:56,170 - INFO - Test RMSE: 0.0073
+2024-12-21 16:22:56,170 - INFO - Test MAE: 0.0059
+2024-12-21 16:22:56,170 - INFO - Cross-validation R² (mean ± std): 0.1305 ± 0.2594
+2024-12-21 16:22:56,170 - INFO - Execution time: 0:00:01.530804
+2024-12-21 16:22:56,221 - INFO - RF model saved to: log\ex_21.12.24_16-22_PBE\pce_prediction_model_RF_PBE_eth.joblib-1734794576170.joblib
+2024-12-21 16:22:56,266 - INFO - RF results file saved to: log\ex_21.12.24_16-22_PBE\PCE_results_RF_PBE_eth.xlsx
+2024-12-21 16:22:56,267 - INFO - 
+Training XGBoost model and generating predictions...
+2024-12-21 16:22:56,730 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2024-12-21 16:22:56,730 - INFO -                 Feature  Importance
+19        deltaE_RedOxH    0.283372
+0                  HOMO    0.109567
+15       HBondAcceptors    0.078420
+6   Molecular_Volume_A3    0.065304
+23           elnChemPot    0.057014
+8     Max_Absorption_nm    0.055001
+22                   EA    0.051867
+5       Surface_Area_A2    0.050166
+12                 TPSA    0.048824
+2         Dipole_Moment    0.047152
+2024-12-21 16:22:56,734 - INFO - 
+XGBoost Model Performance:
+2024-12-21 16:22:56,734 - INFO - Test R²: 0.8894
+2024-12-21 16:22:56,734 - INFO - Test Adjusted R²: 1.0079
+2024-12-21 16:22:56,734 - INFO - Test RMSE: 0.0045
+2024-12-21 16:22:56,735 - INFO - Test MAE: 0.0043
+2024-12-21 16:22:56,735 - INFO - Cross-validation R² (mean ± std): -0.2095 ± 0.5551
+2024-12-21 16:22:56,735 - INFO - Execution time: 0:00:00.462044
+2024-12-21 16:22:56,737 - INFO - XGBoost model saved to: log\ex_21.12.24_16-22_PBE\pce_prediction_model_XGBoost_PBE_eth.joblib-1734794576735.joblib
+2024-12-21 16:22:56,786 - INFO - XGBoost results file saved to: log\ex_21.12.24_16-22_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2024-12-21 16:22:56,788 - INFO - Comprehensive execution info saved to: log\ex_21.12.24_16-22_PBE\notion-1734794576786.txt
+2024-12-21 16:22:56,805 - INFO - 
+Model comparison saved to: log\ex_21.12.24_16-22_PBE\model_comparison_PBE_eth.xlsx
+2024-12-21 16:22:56,805 - INFO - 
+Pipeline completed. Total execution time: 0:00:05.016142
+2024-12-21 16:26:09,494 - INFO - Starting PCE prediction pipeline at 2024-12-21 16:26:09.494152
+2024-12-21 16:26:09,494 - INFO - Preparing dataset...
+2024-12-21 16:26:09,494 - INFO - Extracting DFT data...
+2024-12-21 16:26:13,997 - INFO - Loading experimental data...
+2024-12-21 16:26:14,006 - INFO - Calculating molecular descriptors...
+2024-12-21 16:26:14,076 - INFO - Calculating additional descriptors...
+2024-12-21 16:26:14,078 - INFO - 
+Training RF model and generating predictions...
+2024-12-21 16:26:15,719 - INFO - 
+Top 10 Most Important Features (RF):
+2024-12-21 16:26:15,719 - INFO -                 Feature  Importance
+15       HBondAcceptors    0.074044
+6   Molecular_Volume_A3    0.068409
+12                 TPSA    0.067181
+19        deltaE_RedOxH    0.051039
+22                   EA    0.050605
+21                   IP    0.046069
+25    electronegativity    0.044738
+1                  LUMO    0.044614
+23           elnChemPot    0.042961
+2         Dipole_Moment    0.037114
+2024-12-21 16:26:15,724 - INFO - 
+RF Model Performance:
+2024-12-21 16:26:15,724 - INFO - Test R²: 0.6834
+2024-12-21 16:26:15,724 - INFO - Test Adjusted R²: 1.0226
+2024-12-21 16:26:15,724 - INFO - Test RMSE: 0.0076
+2024-12-21 16:26:15,724 - INFO - Test MAE: 0.0065
+2024-12-21 16:26:15,724 - INFO - Cross-validation R² (mean ± std): 0.0983 ± 0.3056
+2024-12-21 16:26:15,724 - INFO - Execution time: 0:00:01.623218
+2024-12-21 16:26:15,788 - INFO - RF model saved to: log\ex_21.12.24_16-26_LDA\pce_prediction_model_RF_LDA_eth.joblib-1734794775724.joblib
+2024-12-21 16:26:15,823 - INFO - RF results file saved to: log\ex_21.12.24_16-26_LDA\PCE_results_RF_LDA_eth.xlsx
+2024-12-21 16:26:15,823 - INFO - 
+Training XGBoost model and generating predictions...
+2024-12-21 16:26:16,274 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2024-12-21 16:26:16,275 - INFO -                 Feature  Importance
+19        deltaE_RedOxH    0.311228
+0                  HOMO    0.108664
+24         chemHardness    0.095917
+6   Molecular_Volume_A3    0.084925
+15       HBondAcceptors    0.041346
+25    electronegativity    0.039744
+13       RotatableBonds    0.038117
+23           elnChemPot    0.035091
+2         Dipole_Moment    0.031696
+8     Max_Absorption_nm    0.028724
+2024-12-21 16:26:16,280 - INFO - 
+XGBoost Model Performance:
+2024-12-21 16:26:16,281 - INFO - Test R²: 0.6320
+2024-12-21 16:26:16,281 - INFO - Test Adjusted R²: 1.0263
+2024-12-21 16:26:16,281 - INFO - Test RMSE: 0.0082
+2024-12-21 16:26:16,281 - INFO - Test MAE: 0.0068
+2024-12-21 16:26:16,281 - INFO - Cross-validation R² (mean ± std): -0.2852 ± 0.8263
+2024-12-21 16:26:16,281 - INFO - Execution time: 0:00:00.449494
+2024-12-21 16:26:16,284 - INFO - XGBoost model saved to: log\ex_21.12.24_16-26_LDA\pce_prediction_model_XGBoost_LDA_eth.joblib-1734794776281.joblib
+2024-12-21 16:26:16,333 - INFO - XGBoost results file saved to: log\ex_21.12.24_16-26_LDA\PCE_results_XGBoost_LDA_eth.xlsx
+2024-12-21 16:26:16,336 - INFO - Comprehensive execution info saved to: log\ex_21.12.24_16-26_LDA\notion-1734794776333.txt
+2024-12-21 16:26:16,355 - INFO - 
+Model comparison saved to: log\ex_21.12.24_16-26_LDA\model_comparison_LDA_eth.xlsx
+2024-12-21 16:26:16,355 - INFO - 
+Pipeline completed. Total execution time: 0:00:06.839187
+2024-12-21 16:29:34,707 - INFO - Starting PCE prediction pipeline at 2024-12-21 16:29:34.707419
+2024-12-21 16:29:34,708 - INFO - Preparing dataset...
+2024-12-21 16:29:34,708 - INFO - Extracting DFT data...
+2024-12-21 16:29:36,291 - INFO - Loading experimental data...
+2024-12-21 16:29:36,298 - INFO - Calculating molecular descriptors...
+2024-12-21 16:29:36,342 - INFO - Calculating additional descriptors...
+2024-12-21 16:29:36,345 - INFO - 
+Training RF model and generating predictions...
+2024-12-21 16:29:37,913 - INFO - 
+Top 10 Most Important Features (RF):
+2024-12-21 16:29:37,914 - INFO -                 Feature  Importance
+25    electronegativity    0.077086
+12                 TPSA    0.072733
+23           elnChemPot    0.066959
+21                   IP    0.065392
+15       HBondAcceptors    0.065125
+19        deltaE_RedOxH    0.058847
+6   Molecular_Volume_A3    0.053877
+0                  HOMO    0.053221
+22                   EA    0.040741
+18           deltaE_LCB    0.035078
+2024-12-21 16:29:37,919 - INFO - 
+RF Model Performance:
+2024-12-21 16:29:37,919 - INFO - Test R²: 0.7031
+2024-12-21 16:29:37,919 - INFO - Test Adjusted R²: 1.0212
+2024-12-21 16:29:37,919 - INFO - Test RMSE: 0.0074
+2024-12-21 16:29:37,919 - INFO - Test MAE: 0.0062
+2024-12-21 16:29:37,919 - INFO - Cross-validation R² (mean ± std): 0.2215 ± 0.3322
+2024-12-21 16:29:37,919 - INFO - Execution time: 0:00:01.553015
+2024-12-21 16:29:37,932 - INFO - RF model saved to: log\ex_21.12.24_16-29_B3LYP\pce_prediction_model_RF_B3LYP_eth.joblib-1734794977919.joblib
+2024-12-21 16:29:38,020 - INFO - RF results file saved to: log\ex_21.12.24_16-29_B3LYP\PCE_results_RF_B3LYP_eth.xlsx
+2024-12-21 16:29:38,020 - INFO - 
+Training XGBoost model and generating predictions...
+2024-12-21 16:29:38,459 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2024-12-21 16:29:38,459 - INFO -                 Feature  Importance
+19        deltaE_RedOxH    0.191687
+23           elnChemPot    0.171803
+12                 TPSA    0.149511
+22                   EA    0.100384
+0                  HOMO    0.082887
+25    electronegativity    0.072539
+6   Molecular_Volume_A3    0.057838
+8     Max_Absorption_nm    0.024054
+15       HBondAcceptors    0.021966
+1                  LUMO    0.021221
+2024-12-21 16:29:38,464 - INFO - 
+XGBoost Model Performance:
+2024-12-21 16:29:38,464 - INFO - Test R²: 0.9392
+2024-12-21 16:29:38,464 - INFO - Test Adjusted R²: 1.0043
+2024-12-21 16:29:38,464 - INFO - Test RMSE: 0.0033
+2024-12-21 16:29:38,464 - INFO - Test MAE: 0.0032
+2024-12-21 16:29:38,464 - INFO - Cross-validation R² (mean ± std): -0.2061 ± 0.7906
+2024-12-21 16:29:38,464 - INFO - Execution time: 0:00:00.437804
+2024-12-21 16:29:38,467 - INFO - XGBoost model saved to: log\ex_21.12.24_16-29_B3LYP\pce_prediction_model_XGBoost_B3LYP_eth.joblib-1734794978464.joblib
+2024-12-21 16:29:38,499 - INFO - XGBoost results file saved to: log\ex_21.12.24_16-29_B3LYP\PCE_results_XGBoost_B3LYP_eth.xlsx
+2024-12-21 16:29:38,501 - INFO - Comprehensive execution info saved to: log\ex_21.12.24_16-29_B3LYP\notion-1734794978499.txt
+2024-12-21 16:29:38,519 - INFO - 
+Model comparison saved to: log\ex_21.12.24_16-29_B3LYP\model_comparison_B3LYP_eth.xlsx
+2024-12-21 16:29:38,519 - INFO - 
+Pipeline completed. Total execution time: 0:00:03.791776
+2024-12-21 16:32:14,217 - INFO - Starting PCE prediction pipeline at 2024-12-21 16:32:14.217864
+2024-12-21 16:32:14,218 - INFO - Preparing dataset...
+2024-12-21 16:32:14,218 - INFO - Extracting DFT data...
+2024-12-21 16:32:15,821 - INFO - Loading experimental data...
+2024-12-21 16:32:15,828 - INFO - Calculating molecular descriptors...
+2024-12-21 16:32:15,877 - INFO - Calculating additional descriptors...
+2024-12-21 16:32:15,880 - INFO - 
+Training RF model and generating predictions...
+2024-12-21 16:32:17,451 - INFO - 
+Top 10 Most Important Features (RF):
+2024-12-21 16:32:17,451 - INFO -                 Feature  Importance
+25    electronegativity    0.077086
+12                 TPSA    0.072733
+23           elnChemPot    0.066959
+21                   IP    0.065392
+15       HBondAcceptors    0.065125
+19        deltaE_RedOxH    0.058847
+6   Molecular_Volume_A3    0.053877
+0                  HOMO    0.053221
+22                   EA    0.040741
+18           deltaE_LCB    0.035078
+2024-12-21 16:32:17,456 - INFO - 
+RF Model Performance:
+2024-12-21 16:32:17,457 - INFO - Test R²: 0.7031
+2024-12-21 16:32:17,457 - INFO - Test Adjusted R²: 1.0212
+2024-12-21 16:32:17,457 - INFO - Test RMSE: 0.0074
+2024-12-21 16:32:17,457 - INFO - Test MAE: 0.0062
+2024-12-21 16:32:17,457 - INFO - Cross-validation R² (mean ± std): 0.2215 ± 0.3322
+2024-12-21 16:32:17,457 - INFO - Execution time: 0:00:01.555139
+2024-12-21 16:32:17,468 - INFO - RF model saved to: log\ex_21.12.24_16-32_B3LYP\pce_prediction_model_RF_B3LYP_eth.joblib-1734795137457.joblib
+2024-12-21 16:32:17,558 - INFO - RF results file saved to: log\ex_21.12.24_16-32_B3LYP\PCE_results_RF_B3LYP_eth.xlsx
+2024-12-21 16:32:17,558 - INFO - 
+Training XGBoost model and generating predictions...
+2024-12-21 16:32:17,985 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2024-12-21 16:32:17,985 - INFO -                 Feature  Importance
+19        deltaE_RedOxH    0.191687
+23           elnChemPot    0.171803
+12                 TPSA    0.149511
+22                   EA    0.100384
+0                  HOMO    0.082887
+25    electronegativity    0.072539
+6   Molecular_Volume_A3    0.057838
+8     Max_Absorption_nm    0.024054
+15       HBondAcceptors    0.021966
+1                  LUMO    0.021221
+2024-12-21 16:32:17,990 - INFO - 
+XGBoost Model Performance:
+2024-12-21 16:32:17,990 - INFO - Test R²: 0.9392
+2024-12-21 16:32:17,990 - INFO - Test Adjusted R²: 1.0043
+2024-12-21 16:32:17,990 - INFO - Test RMSE: 0.0033
+2024-12-21 16:32:17,990 - INFO - Test MAE: 0.0032
+2024-12-21 16:32:17,990 - INFO - Cross-validation R² (mean ± std): -0.2061 ± 0.7906
+2024-12-21 16:32:17,990 - INFO - Execution time: 0:00:00.426045
+2024-12-21 16:32:17,993 - INFO - XGBoost model saved to: log\ex_21.12.24_16-32_B3LYP\pce_prediction_model_XGBoost_B3LYP_eth.joblib-1734795137990.joblib
+2024-12-21 16:32:18,037 - INFO - XGBoost results file saved to: log\ex_21.12.24_16-32_B3LYP\PCE_results_XGBoost_B3LYP_eth.xlsx
+2024-12-21 16:32:18,039 - INFO - Comprehensive execution info saved to: log\ex_21.12.24_16-32_B3LYP\notion-1734795138037.txt
+2024-12-21 16:32:18,057 - INFO - 
+Model comparison saved to: log\ex_21.12.24_16-32_B3LYP\model_comparison_B3LYP_eth.xlsx
+2024-12-21 16:32:18,057 - INFO - 
+Pipeline completed. Total execution time: 0:00:03.819735
