@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 from utils.regression_metrics_utils import ModelEvaluator
-
+from lightgbm import LGBMRegressor
 
 class BasePCEModel(ABC):
     """Base class for PCE prediction models."""
@@ -266,5 +266,51 @@ class SvmPCEModel(BasePCEModel):
         importance_df = pd.DataFrame({
             'Feature': self.feature_columns,
             'Importance': np.abs(self.model.coef_[0])
+        })
+        return importance_df.sort_values('Importance', ascending=False)
+
+
+class LightGBMPCEModel(BasePCEModel):
+    """LightGBM implementation of PCE prediction model."""
+
+    def __init__(
+            self,
+            test_size: float = 0.15,
+            random_state: int = 0,
+            n_estimators: int = 100,
+            learning_rate: float = 0.05,
+            num_leaves: int = 31,
+            feature_fraction: float = 0.8,
+            bagging_fraction: float = 0.8,
+            bagging_freq: int = 5,
+            cv_folds: int = 5
+    ):
+        super().__init__(test_size, random_state, cv_folds)
+        self.n_estimators = n_estimators
+        self.learning_rate = learning_rate
+        self.num_leaves = num_leaves
+        self.feature_fraction = feature_fraction
+        self.bagging_fraction = bagging_fraction
+        self.bagging_freq = bagging_freq
+
+    def _create_model(self) -> None:
+        self.model = LGBMRegressor(
+            random_state=self.random_state,
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            num_leaves=self.num_leaves,
+            feature_fraction=self.feature_fraction,
+            bagging_fraction=self.bagging_fraction,
+            bagging_freq=self.bagging_freq,
+            verbose=-1
+        )
+
+    def get_feature_importance(self) -> pd.DataFrame:
+        if self.model is None:
+            raise ValueError("Model has not been trained yet")
+
+        importance_df = pd.DataFrame({
+            'Feature': self.feature_columns,
+            'Importance': self.model.feature_importances_
         })
         return importance_df.sort_values('Importance', ascending=False)

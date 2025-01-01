@@ -126,7 +126,6 @@ def calculate_molecular_descriptors(mol_file):
 
         # Create calculator with default descriptors
         calc = Calculator()
-
         mordred_desc = calc(mol)
 
         # Filter out any invalid or NaN values

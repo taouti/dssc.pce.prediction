@@ -13,7 +13,9 @@ from utils.logging_utils import ExecutionLogger
 #from utils.rf_pce_model import RfPCEModel
 from utils.prediction_model_classes import (
     RfPCEModel,
-    XGBoostPCEModel
+    XGBoostPCEModel,
+#    LightGBMPCEModel,
+#    SvmPCEModel
 )
 
 # Setup logging
@@ -28,7 +30,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Keyword Configuration
-DFT_METHOD = 'B3LYP'
+DFT_METHOD = 'PBE'
 
 # File and Directory Configuration
 CONFIG = {
@@ -47,11 +49,13 @@ CONFIG = {
     # Model Parameters
     'TEST_SIZE': 0.1,
     'RANDOM_STATE': 0,
-    'N_ESTIMATORS': 100,
+    'N_ESTIMATORS': 140,
     'CV_FOLDS': 5,
     'N_JOBS': -1,
     'MAX_FEATURES': 'sqrt',
     'MAX_SAMPLES': 0.6,
+    'LEARNING_RATE': 0.4,
+    'max_depth': 7,
 }
 
 
@@ -81,7 +85,7 @@ COSMO_PATTERNS = {
     'Solvation_Energy_eV': r"Dielectric \(solvation\) energy\s+=\s+[-\d.]+\s+([-\d.]+)",
     'Surface_Area_A2': r"Surface area of cavity \[A\*\*2\]\s*=\s+([-\d.]+)",
     'Molecular_Volume_A3': r"Total Volume of cavity \[A\*\*3\]\s*=\s+([-\d.]+)",
-    'COSMO_Screening_Charge': r"cosmo\s*=\s*([-\d.]+)"
+    #'COSMO_Screening_Charge': r"cosmo\s*=\s*([-\d.]+)"
 }
 
 EXCITATION_PATTERN = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
@@ -319,8 +323,8 @@ def main():
                 test_size=CONFIG['TEST_SIZE'],
                 random_state=CONFIG['RANDOM_STATE'],
                 n_estimators=CONFIG['N_ESTIMATORS'],
-                learning_rate=0.1,
-                max_depth=6,
+                learning_rate=CONFIG['LEARNING_RATE'],
+                max_depth=CONFIG['max_depth'],
                 cv_folds=CONFIG['CV_FOLDS']
             )
         }
@@ -363,9 +367,14 @@ def main():
                 f"Cross-validation R² (mean ± std): {metrics['cv']['r2_mean']:.4f} ± {metrics['cv']['r2_std']:.4f}")
             logger.info(f"Execution time: {execution_time}")
 
-            # Save model
-            model_filename = f"pce_prediction_model_{model_name}_{DFT_METHOD}_eth.joblib"
-            model_path = execution_logger.save_model(model.model, model_filename)
+            # Save model with feature information
+            model_data = {
+                'model': model.model,
+                'feature_columns': model.feature_columns,
+                'scaler': model.scaler
+            }
+            model_filename = f"pce_prediction_model_{model_name}_{DFT_METHOD}_eth"
+            model_path = execution_logger.save_model(model_data, model_filename)
             logger.info(f"{model_name} model saved to: {model_path}")
 
             # Save results for each model
