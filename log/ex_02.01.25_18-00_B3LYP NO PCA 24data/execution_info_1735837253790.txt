@@ -1,0 +1,152 @@
+=== Execution Information ===
+Timestamp: 2025.01.02_18-00-44
+
+=== Dataset Information ===
+
+RF Model:
+Total samples: 22
+Training samples: 19
+Testing samples: 3
+
+XGBoost Model:
+Total samples: 22
+Training samples: 19
+Testing samples: 3
+
+=== Configuration ===
+{
+  "config": {
+    "DFT_OUTPUT_DIR": "./outputs_B3LYP_ethanol",
+    "MOL_DIR": "./mol_B3LYP_ethanol",
+    "EXPERIMENTAL_DATA": "dyes_experimental_dataset.xlsx",
+    "DFT_DATASET": "dyes_DFT_B3LYP_eth_dataset.xlsx",
+    "COMPREHENSIVE_RESULTS": "PCE_results_B3LYP_eth.xlsx",
+    "MODEL_OUTPUT": "pce_prediction_model_B3LYP_eth.joblib",
+    "TEST_SIZE": 0.1,
+    "RANDOM_STATE": 0,
+    "N_ESTIMATORS": 100,
+    "CV_FOLDS": 5,
+    "N_JOBS": -1,
+    "MAX_FEATURES": "sqrt",
+    "MAX_SAMPLES": 0.6,
+    "LEARNING_RATE": 0.4,
+    "max_depth": 7
+  },
+  "metrics": {
+    "RF": {
+      "train": {
+        "r2": 0.8052251083808347,
+        "adjusted_r2": 1.3187225499222706,
+        "rmse": 0.006743586239414527,
+        "mae": 0.005387157894736837,
+        "std_residuals": 0.006722585464246597,
+        "mean_residuals": -0.000531789473684216
+      },
+      "test": {
+        "r2": 0.5071182400078181,
+        "adjusted_r2": 1.0365097599994209,
+        "rmse": 0.01534179766737479,
+        "mae": 0.013327666666666654,
+        "std_residuals": 0.014096372961392111,
+        "mean_residuals": 0.0060549999999999935
+      },
+      "cv": {
+        "r2_mean": -0.35363891741841436,
+        "r2_std": 1.2609808213722988,
+        "rmse_mean": -0.012158505524349314,
+        "rmse_std": 0.004335491494363786,
+        "mae_mean": 0.010847950000000004,
+        "mae_std": 0.0038713640955094935
+      },
+      "execution_time": "0:00:02.312039"
+    },
+    "XGBoost": {
+      "train": {
+        "r2": 0.9991982318282828,
+        "adjusted_r2": 1.0013119842809917,
+        "rmse": 0.00043266208220527243,
+        "mae": 0.0003405042029525104,
+        "std_residuals": 0.0004313337659921217,
+        "mean_residuals": -3.387712640197681e-05
+      },
+      "test": {
+        "r2": 0.6469516670867221,
+        "adjusted_r2": 1.0261517283639465,
+        "rmse": 0.012984402215712771,
+        "mae": 0.009784234055876731,
+        "std_residuals": 0.011615025637886316,
+        "mean_residuals": 0.005803953853249551
+      },
+      "cv": {
+        "r2_mean": -0.6419827784467919,
+        "r2_std": 2.029208928159965,
+        "rmse_mean": -0.012495342372032387,
+        "rmse_std": 0.006413412826780895,
+        "mae_mean": 0.010647146016582848,
+        "mae_std": 0.005257865679069121
+      },
+      "execution_time": "0:00:00.780402"
+    }
+  },
+  "total_execution_time": "0:00:09.154230"
+}
+
+=== Performance Metrics ===
+
+RF Model:
+{
+  "train": {
+    "r2": 0.8052251083808347,
+    "adjusted_r2": 1.3187225499222706,
+    "rmse": 0.006743586239414527,
+    "mae": 0.005387157894736837,
+    "std_residuals": 0.006722585464246597,
+    "mean_residuals": -0.000531789473684216
+  },
+  "test": {
+    "r2": 0.5071182400078181,
+    "adjusted_r2": 1.0365097599994209,
+    "rmse": 0.01534179766737479,
+    "mae": 0.013327666666666654,
+    "std_residuals": 0.014096372961392111,
+    "mean_residuals": 0.0060549999999999935
+  },
+  "cv": {
+    "r2_mean": -0.35363891741841436,
+    "r2_std": 1.2609808213722988,
+    "rmse_mean": -0.012158505524349314,
+    "rmse_std": 0.004335491494363786,
+    "mae_mean": 0.010847950000000004,
+    "mae_std": 0.0038713640955094935
+  },
+  "execution_time": "0:00:02.312039"
+}
+
+XGBoost Model:
+{
+  "train": {
+    "r2": 0.9991982318282828,
+    "adjusted_r2": 1.0013119842809917,
+    "rmse": 0.00043266208220527243,
+    "mae": 0.0003405042029525104,
+    "std_residuals": 0.0004313337659921217,
+    "mean_residuals": -3.387712640197681e-05
+  },
+  "test": {
+    "r2": 0.6469516670867221,
+    "adjusted_r2": 1.0261517283639465,
+    "rmse": 0.012984402215712771,
+    "mae": 0.009784234055876731,
+    "std_residuals": 0.011615025637886316,
+    "mean_residuals": 0.005803953853249551
+  },
+  "cv": {
+    "r2_mean": -0.6419827784467919,
+    "r2_std": 2.029208928159965,
+    "rmse_mean": -0.012495342372032387,
+    "rmse_std": 0.006413412826780895,
+    "mae_mean": 0.010647146016582848,
+    "mae_std": 0.005257865679069121
+  },
+  "execution_time": "0:00:00.780402"
+}

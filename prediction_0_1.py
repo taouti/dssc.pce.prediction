@@ -31,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Keyword Configuration
-DFT_METHOD = 'LDA'
+DFT_METHOD = 'PBE'
 
 # File and Directory Configuration
 CONFIG = {
