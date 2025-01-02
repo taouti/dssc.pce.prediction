@@ -4,16 +4,19 @@ import json
 import time
 import joblib
 import pandas as pd
+import matplotlib.pyplot as plt
+
 
 class ExecutionLogger:
     """Handles logging of model execution, configs, and results."""
 
-    def __init__(self, dft:str, base_log_dir: str = "log"):
+    def __init__(self, dft: str, base_log_dir: str = "log"):
         """
         Initialize the execution logger.
 
         Args:
-            base_log_dir (str): Base directory for logs
+            dft: DFT method used
+            base_log_dir: Base directory for logs
         """
         self.base_log_dir = Path(base_log_dir)
         self.timestamp = datetime.now()
@@ -30,59 +33,71 @@ class ExecutionLogger:
         self.execution_dir = self.base_log_dir / execution_dirname
         self.execution_dir.mkdir(exist_ok=True)
 
+        # Create subdirectories
+        (self.execution_dir / "plots").mkdir(exist_ok=True)
+        (self.execution_dir / "models").mkdir(exist_ok=True)
+        (self.execution_dir / "results").mkdir(exist_ok=True)
+
     def _get_millisecond_timestamp(self) -> str:
         """Generate millisecond timestamp for file names."""
         return str(int(time.time() * 1000))
 
     def save_model(self, model, prefix: str = "model") -> Path:
-        """
-        Save model with timestamp.
-
-        Args:
-            model: Trained model to save
-            prefix (str): Prefix for the model file
-
-        Returns:
-            Path: Path where model was saved
-        """
+        """Save model with timestamp."""
         timestamp = self._get_millisecond_timestamp()
-        model_path = self.execution_dir / f"{prefix}-{timestamp}.joblib"
+        model_path = self.execution_dir / "models" / f"{prefix}-{timestamp}.joblib"
         joblib.dump(model, model_path)
         return model_path
 
-    def save_execution_info(self, config: dict, metrics: dict, results: dict, prefix: str = "notion") -> Path:
+    def save_plot(self, fig: plt.Figure, name: str) -> Path:
         """
-        Save configuration and results for multiple models.
+        Save a matplotlib figure.
 
         Args:
-            config (dict): Configuration used for the execution
-            metrics (dict): Dictionary containing metrics for each model
-            results (dict): Dictionary containing results DataFrames for each model
-            prefix (str): Prefix for the info file
+            fig: matplotlib Figure object
+            name: Base name for the plot file
 
         Returns:
-            Path: Path where info was saved
+            Path where the plot was saved
         """
         timestamp = self._get_millisecond_timestamp()
-        info_path = self.execution_dir / f"{prefix}-{timestamp}.txt"
+        plot_path = self.execution_dir / "plots" / f"{name}_{timestamp}.png"
+        fig.savefig(plot_path, dpi=300, bbox_inches='tight')
+        return plot_path
+
+    def save_results_file(self, results_file: str) -> Path:
+        """Save results file to the results directory."""
+        try:
+            results_path = Path(results_file)
+            if not results_path.exists():
+                raise FileNotFoundError(f"Results file '{results_file}' not found.")
+
+            new_results_path = self.execution_dir / "results" / results_path.name
+            results_path.rename(new_results_path)
+
+            return new_results_path
+        except Exception as e:
+            raise RuntimeError(f"Error saving results file: {e}")
+
+    def save_execution_info(self, config: dict, metrics: dict, results: dict) -> Path:
+        """Save execution information."""
+        timestamp = self._get_millisecond_timestamp()
+        info_path = self.execution_dir / f"execution_info_{timestamp}.txt"
 
         with open(info_path, 'w') as f:
             f.write("=== Execution Information ===\n")
             f.write(f"Timestamp: {self.timestamp.strftime('%Y.%m.%d_%H-%M-%S')}\n\n")
 
-            # Write dataset information for each model
             f.write("=== Dataset Information ===\n")
             for model_name, model_results in results.items():
                 f.write(f"\n{model_name} Model:\n")
-                f.write(f"Total number of compounds: {len(model_results)}\n")
-                f.write(f"Training set size: {len(model_results[model_results['Dataset'] == 'Training'])}\n")
-                f.write(f"Test set size: {len(model_results[model_results['Dataset'] == 'Testing'])}\n")
+                f.write(f"Total samples: {len(model_results)}\n")
+                f.write(f"Training samples: {len(model_results[model_results['Dataset'] == 'Training'])}\n")
+                f.write(f"Testing samples: {len(model_results[model_results['Dataset'] == 'Testing'])}\n")
 
-            # Write configuration
             f.write("\n=== Configuration ===\n")
             f.write(json.dumps(config, indent=2))
 
-            # Write performance metrics for each model
             f.write("\n\n=== Performance Metrics ===\n")
             for model_name, model_metrics in metrics.items():
                 f.write(f"\n{model_name} Model:\n")
@@ -90,27 +105,3 @@ class ExecutionLogger:
                 f.write("\n")
 
         return info_path
-
-    def save_results_file(self, results_file: str) -> Path:
-        """
-        Save the results file to the log directory.
-
-        Args:
-            results_file (str): Path to the results file to be saved.
-
-        Returns:
-            Path: Path where the results file was saved.
-        """
-        try:
-            # Ensure the results file exists
-            results_path = Path(results_file)
-            if not results_path.exists():
-                raise FileNotFoundError(f"Results file '{results_file}' not found.")
-
-            # Save the file in the execution directory
-            new_results_path = self.execution_dir / results_path.name
-            results_path.rename(new_results_path)
-
-            return new_results_path
-        except Exception as e:
-            raise RuntimeError(f"Error saving results file: {e}")

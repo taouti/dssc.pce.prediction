@@ -7315,3 +7315,687 @@ XGBoost Model Performance:
 Model comparison saved to: log\ex_27.12.24_18-57_PBE\model_comparison_PBE_eth.xlsx
 2024-12-27 18:57:33,685 - INFO - 
 Pipeline completed. Total execution time: 0:00:07.679156
+2025-01-01 16:39:49,613 - INFO - Starting PCE prediction pipeline at 2025-01-01 16:39:49.613085
+2025-01-01 16:39:49,615 - INFO - Preparing dataset...
+2025-01-01 16:39:49,615 - INFO - Extracting DFT data...
+2025-01-01 16:39:58,851 - INFO - Loading experimental data...
+2025-01-01 16:39:58,885 - INFO - Calculating molecular descriptors...
+2025-01-01 16:39:59,313 - INFO - Calculating additional descriptors...
+2025-01-01 16:39:59,317 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 16:40:01,988 - ERROR - Error in main execution: X has 29 features, but RandomForestRegressor is expecting 6 features as input.
+2025-01-01 16:52:18,232 - INFO - Starting PCE prediction pipeline at 2025-01-01 16:52:18.232695
+2025-01-01 16:52:18,233 - INFO - Preparing dataset...
+2025-01-01 16:52:18,233 - INFO - Extracting DFT data...
+2025-01-01 16:52:25,034 - INFO - Loading experimental data...
+2025-01-01 16:52:25,043 - INFO - Calculating molecular descriptors...
+2025-01-01 16:52:25,125 - INFO - Calculating additional descriptors...
+2025-01-01 16:52:25,128 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 16:52:27,962 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 16:52:27,963 - INFO - 
+RF Model Performance:
+2025-01-01 16:52:27,963 - INFO - Test R²: 0.3119
+2025-01-01 16:52:27,963 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 16:52:27,963 - INFO - Test RMSE: 0.0088
+2025-01-01 16:52:27,963 - INFO - Test MAE: 0.0079
+2025-01-01 16:52:27,963 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 16:52:27,963 - INFO - Execution time: 0:00:02.765867
+2025-01-01 16:52:27,987 - INFO - RF model saved to: log\ex_01.01.25_16-52_PBE\pce_prediction_model_RF_PBE_eth-1735746747963.joblib
+2025-01-01 16:52:28,054 - INFO - RF results file saved to: log\ex_01.01.25_16-52_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 16:52:28,054 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 16:52:28,924 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 16:52:28,925 - INFO - 
+XGBoost Model Performance:
+2025-01-01 16:52:28,925 - INFO - Test R²: -0.8111
+2025-01-01 16:52:28,925 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 16:52:28,925 - INFO - Test RMSE: 0.0143
+2025-01-01 16:52:28,925 - INFO - Test MAE: 0.0141
+2025-01-01 16:52:28,925 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 16:52:28,925 - INFO - Execution time: 0:00:00.868951
+2025-01-01 16:52:28,935 - INFO - XGBoost model saved to: log\ex_01.01.25_16-52_PBE\pce_prediction_model_XGBoost_PBE_eth-1735746748925.joblib
+2025-01-01 16:52:29,034 - INFO - XGBoost results file saved to: log\ex_01.01.25_16-52_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 16:52:29,038 - ERROR - Error in main execution: Object of type int64 is not JSON serializable
+2025-01-01 16:54:36,444 - INFO - Starting PCE prediction pipeline at 2025-01-01 16:54:36.444429
+2025-01-01 16:54:36,445 - INFO - Preparing dataset...
+2025-01-01 16:54:36,445 - INFO - Extracting DFT data...
+2025-01-01 16:54:43,691 - INFO - Loading experimental data...
+2025-01-01 16:54:43,701 - INFO - Calculating molecular descriptors...
+2025-01-01 16:54:43,791 - INFO - Calculating additional descriptors...
+2025-01-01 16:54:43,796 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 16:54:46,644 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 16:54:46,644 - INFO - 
+RF Model Performance:
+2025-01-01 16:54:46,645 - INFO - Test R²: 0.3119
+2025-01-01 16:54:46,645 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 16:54:46,645 - INFO - Test RMSE: 0.0088
+2025-01-01 16:54:46,645 - INFO - Test MAE: 0.0079
+2025-01-01 16:54:46,645 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 16:54:46,645 - INFO - Execution time: 0:00:02.830382
+2025-01-01 16:54:46,672 - INFO - RF model saved to: log\ex_01.01.25_16-54_PBE\pce_prediction_model_RF_PBE_eth-1735746886645.joblib
+2025-01-01 16:54:46,735 - INFO - RF results file saved to: log\ex_01.01.25_16-54_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 16:54:46,735 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 16:54:47,637 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 16:54:47,638 - INFO - 
+XGBoost Model Performance:
+2025-01-01 16:54:47,638 - INFO - Test R²: -0.8111
+2025-01-01 16:54:47,638 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 16:54:47,638 - INFO - Test RMSE: 0.0143
+2025-01-01 16:54:47,638 - INFO - Test MAE: 0.0141
+2025-01-01 16:54:47,638 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 16:54:47,639 - INFO - Execution time: 0:00:00.900973
+2025-01-01 16:54:47,647 - INFO - XGBoost model saved to: log\ex_01.01.25_16-54_PBE\pce_prediction_model_XGBoost_PBE_eth-1735746887639.joblib
+2025-01-01 16:54:47,752 - INFO - XGBoost results file saved to: log\ex_01.01.25_16-54_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 16:54:47,756 - ERROR - Error in main execution: name 'np' is not defined
+2025-01-01 17:04:54,825 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:04:54.825803
+2025-01-01 17:04:54,826 - INFO - Preparing dataset...
+2025-01-01 17:04:54,826 - INFO - Extracting DFT data...
+2025-01-01 17:05:01,825 - INFO - Loading experimental data...
+2025-01-01 17:05:01,835 - INFO - Calculating molecular descriptors...
+2025-01-01 17:05:01,926 - INFO - Calculating additional descriptors...
+2025-01-01 17:05:01,930 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:05:04,866 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:05:04,866 - INFO - 
+RF Model Performance:
+2025-01-01 17:05:04,867 - INFO - Test R²: 0.3119
+2025-01-01 17:05:04,867 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 17:05:04,867 - INFO - Test RMSE: 0.0088
+2025-01-01 17:05:04,867 - INFO - Test MAE: 0.0079
+2025-01-01 17:05:04,867 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 17:05:04,867 - INFO - Execution time: 0:00:02.917963
+2025-01-01 17:05:04,891 - INFO - RF model saved to: log\ex_01.01.25_17-04_PBE\pce_prediction_model_RF_PBE_eth-1735747504868.joblib
+2025-01-01 17:05:04,959 - INFO - RF results file saved to: log\ex_01.01.25_17-04_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 17:05:04,959 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 17:05:05,830 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 17:05:05,830 - INFO - 
+XGBoost Model Performance:
+2025-01-01 17:05:05,830 - INFO - Test R²: -0.8111
+2025-01-01 17:05:05,830 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 17:05:05,831 - INFO - Test RMSE: 0.0143
+2025-01-01 17:05:05,831 - INFO - Test MAE: 0.0141
+2025-01-01 17:05:05,831 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 17:05:05,831 - INFO - Execution time: 0:00:00.869986
+2025-01-01 17:05:05,840 - INFO - XGBoost model saved to: log\ex_01.01.25_17-04_PBE\pce_prediction_model_XGBoost_PBE_eth-1735747505831.joblib
+2025-01-01 17:05:05,960 - INFO - XGBoost results file saved to: log\ex_01.01.25_17-04_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 17:05:05,966 - ERROR - Error in main execution: Object of type int64 is not JSON serializable
+2025-01-01 17:19:41,145 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:19:41.145036
+2025-01-01 17:19:41,145 - INFO - Preparing dataset...
+2025-01-01 17:19:41,145 - INFO - Extracting DFT data...
+2025-01-01 17:19:48,145 - INFO - Loading experimental data...
+2025-01-01 17:19:48,156 - INFO - Calculating molecular descriptors...
+2025-01-01 17:19:48,247 - INFO - Calculating additional descriptors...
+2025-01-01 17:19:48,250 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:19:50,899 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:19:50,900 - INFO - 
+RF Model Performance:
+2025-01-01 17:19:50,900 - INFO - Test R²: 0.3119
+2025-01-01 17:19:50,900 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 17:19:50,900 - INFO - Test RMSE: 0.0088
+2025-01-01 17:19:50,900 - INFO - Test MAE: 0.0079
+2025-01-01 17:19:50,900 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 17:19:50,900 - INFO - Execution time: 0:00:02.632268
+2025-01-01 17:19:50,928 - INFO - RF model saved to: log\ex_01.01.25_17-19_PBE\pce_prediction_model_RF_PBE_eth-1735748390900.joblib
+2025-01-01 17:19:50,992 - INFO - RF results file saved to: log\ex_01.01.25_17-19_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 17:19:50,992 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 17:19:51,847 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 17:19:51,847 - INFO - 
+XGBoost Model Performance:
+2025-01-01 17:19:51,847 - INFO - Test R²: -0.8111
+2025-01-01 17:19:51,847 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 17:19:51,848 - INFO - Test RMSE: 0.0143
+2025-01-01 17:19:51,848 - INFO - Test MAE: 0.0141
+2025-01-01 17:19:51,848 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 17:19:51,848 - INFO - Execution time: 0:00:00.854309
+2025-01-01 17:19:51,857 - INFO - XGBoost model saved to: log\ex_01.01.25_17-19_PBE\pce_prediction_model_XGBoost_PBE_eth-1735748391848.joblib
+2025-01-01 17:19:51,964 - INFO - XGBoost results file saved to: log\ex_01.01.25_17-19_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 17:19:51,967 - ERROR - Error in main execution: Object of type int64 is not JSON serializable
+2025-01-01 17:44:30,307 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:44:30.307746
+2025-01-01 17:44:30,308 - INFO - Preparing dataset...
+2025-01-01 17:44:30,308 - INFO - Extracting DFT data...
+2025-01-01 17:44:37,268 - INFO - Loading experimental data...
+2025-01-01 17:44:37,276 - INFO - Calculating molecular descriptors...
+2025-01-01 17:44:37,361 - INFO - Calculating additional descriptors...
+2025-01-01 17:44:37,364 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:44:40,166 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:44:40,167 - INFO - 
+RF Model Performance:
+2025-01-01 17:44:40,167 - INFO - Test R²: 0.3119
+2025-01-01 17:44:40,167 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 17:44:40,167 - INFO - Test RMSE: 0.0088
+2025-01-01 17:44:40,167 - INFO - Test MAE: 0.0079
+2025-01-01 17:44:40,167 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 17:44:40,167 - INFO - Execution time: 0:00:02.769607
+2025-01-01 17:44:40,217 - INFO - RF model saved to: log\ex_01.01.25_17-44_PBE\pce_prediction_model_RF_PBE_eth-1735749880167.joblib
+2025-01-01 17:44:40,268 - INFO - RF results file saved to: log\ex_01.01.25_17-44_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 17:44:40,268 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 17:44:41,121 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 17:44:41,121 - INFO - 
+XGBoost Model Performance:
+2025-01-01 17:44:41,121 - INFO - Test R²: -0.8111
+2025-01-01 17:44:41,121 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 17:44:41,122 - INFO - Test RMSE: 0.0143
+2025-01-01 17:44:41,122 - INFO - Test MAE: 0.0141
+2025-01-01 17:44:41,122 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 17:44:41,122 - INFO - Execution time: 0:00:00.852603
+2025-01-01 17:44:41,131 - INFO - XGBoost model saved to: log\ex_01.01.25_17-44_PBE\pce_prediction_model_XGBoost_PBE_eth-1735749881122.joblib
+2025-01-01 17:44:41,237 - INFO - XGBoost results file saved to: log\ex_01.01.25_17-44_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 17:44:41,240 - ERROR - Error in main execution: 'ExecutionLogger' object has no attribute 'logger'
+2025-01-01 17:54:25,915 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:54:25.915291
+2025-01-01 17:54:25,930 - INFO - Preparing dataset...
+2025-01-01 17:54:25,930 - INFO - Extracting DFT data...
+2025-01-01 17:54:32,832 - INFO - Loading experimental data...
+2025-01-01 17:54:32,843 - INFO - Calculating molecular descriptors...
+2025-01-01 17:54:32,928 - INFO - Calculating additional descriptors...
+2025-01-01 17:54:32,932 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:54:35,751 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:54:35,751 - INFO - 
+RF Model Performance:
+2025-01-01 17:54:35,751 - INFO - Test R²: 0.3119
+2025-01-01 17:54:35,751 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 17:54:35,751 - INFO - Test RMSE: 0.0088
+2025-01-01 17:54:35,751 - INFO - Test MAE: 0.0079
+2025-01-01 17:54:35,751 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 17:54:35,751 - INFO - Execution time: 0:00:02.799765
+2025-01-01 17:54:35,764 - ERROR - Error in main execution: unsupported operand type(s) for /: 'NoneType' and 'str'
+2025-01-01 17:56:39,072 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:56:39.072193
+2025-01-01 17:56:39,072 - INFO - Preparing dataset...
+2025-01-01 17:56:39,073 - INFO - Extracting DFT data...
+2025-01-01 17:56:45,986 - INFO - Loading experimental data...
+2025-01-01 17:56:45,995 - INFO - Calculating molecular descriptors...
+2025-01-01 17:56:46,088 - INFO - Calculating additional descriptors...
+2025-01-01 17:56:46,091 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:56:49,199 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:56:49,200 - INFO - 
+RF Model Performance:
+2025-01-01 17:56:49,200 - INFO - Test R²: 0.3119
+2025-01-01 17:56:49,200 - INFO - Test Adjusted R²: 1.6881
+2025-01-01 17:56:49,200 - INFO - Test RMSE: 0.0088
+2025-01-01 17:56:49,200 - INFO - Test MAE: 0.0079
+2025-01-01 17:56:49,200 - INFO - Cross-validation R² (mean ± std): 0.0944 ± 0.3068
+2025-01-01 17:56:49,200 - INFO - Execution time: 0:00:03.072907
+2025-01-01 17:56:49,225 - INFO - RF model saved to: log\ex_01.01.25_17-56_PBE\pce_prediction_model_RF_PBE_eth-1735750609201.joblib
+2025-01-01 17:56:49,294 - INFO - RF results file saved to: log\ex_01.01.25_17-56_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 17:56:49,294 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 17:56:50,180 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 17:56:50,180 - INFO - 
+XGBoost Model Performance:
+2025-01-01 17:56:50,180 - INFO - Test R²: -0.8111
+2025-01-01 17:56:50,181 - INFO - Test Adjusted R²: 2.8111
+2025-01-01 17:56:50,181 - INFO - Test RMSE: 0.0143
+2025-01-01 17:56:50,181 - INFO - Test MAE: 0.0141
+2025-01-01 17:56:50,181 - INFO - Cross-validation R² (mean ± std): -0.0512 ± 0.3805
+2025-01-01 17:56:50,181 - INFO - Execution time: 0:00:00.883491
+2025-01-01 17:56:50,189 - INFO - XGBoost model saved to: log\ex_01.01.25_17-56_PBE\pce_prediction_model_XGBoost_PBE_eth-1735750610181.joblib
+2025-01-01 17:56:50,300 - INFO - XGBoost results file saved to: log\ex_01.01.25_17-56_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 17:56:50,304 - ERROR - Error in main execution: 'ExecutionLogger' object has no attribute 'logger'
+2025-01-01 17:58:29,607 - INFO - Starting PCE prediction pipeline at 2025-01-01 17:58:29.607966
+2025-01-01 17:58:29,607 - INFO - Preparing dataset...
+2025-01-01 17:58:29,607 - INFO - Extracting DFT data...
+2025-01-01 17:58:36,402 - INFO - Loading experimental data...
+2025-01-01 17:58:36,412 - INFO - Calculating molecular descriptors...
+2025-01-01 17:58:36,499 - INFO - Calculating additional descriptors...
+2025-01-01 17:58:36,503 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 17:58:38,899 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 17:58:38,899 - INFO - 
+RF Model Performance:
+2025-01-01 17:58:38,899 - INFO - Test R²: 0.3836
+2025-01-01 17:58:38,899 - INFO - Test Adjusted R²: 1.6164
+2025-01-01 17:58:38,900 - INFO - Test RMSE: 0.0083
+2025-01-01 17:58:38,900 - INFO - Test MAE: 0.0071
+2025-01-01 17:58:38,900 - INFO - Cross-validation R² (mean ± std): 0.1146 ± 0.2936
+2025-01-01 17:58:38,900 - INFO - Execution time: 0:00:02.374703
+2025-01-01 17:58:38,917 - INFO - RF model saved to: log\ex_01.01.25_17-58_PBE\pce_prediction_model_RF_PBE_eth-1735750718900.joblib
+2025-01-01 17:58:38,995 - INFO - RF results file saved to: log\ex_01.01.25_17-58_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 17:58:38,995 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 17:58:39,939 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 17:58:39,939 - INFO - 
+XGBoost Model Performance:
+2025-01-01 17:58:39,939 - INFO - Test R²: -0.8128
+2025-01-01 17:58:39,940 - INFO - Test Adjusted R²: 2.8128
+2025-01-01 17:58:39,940 - INFO - Test RMSE: 0.0143
+2025-01-01 17:58:39,940 - INFO - Test MAE: 0.0141
+2025-01-01 17:58:39,940 - INFO - Cross-validation R² (mean ± std): -0.0505 ± 0.3799
+2025-01-01 17:58:39,940 - INFO - Execution time: 0:00:00.941383
+2025-01-01 17:58:39,949 - INFO - XGBoost model saved to: log\ex_01.01.25_17-58_PBE\pce_prediction_model_XGBoost_PBE_eth-1735750719940.joblib
+2025-01-01 17:58:40,060 - INFO - XGBoost results file saved to: log\ex_01.01.25_17-58_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 17:58:40,064 - ERROR - Error in main execution: Object of type int64 is not JSON serializable
+2025-01-01 18:24:54,460 - INFO - Starting PCE prediction pipeline at 2025-01-01 18:24:54.460657
+2025-01-01 18:24:54,461 - INFO - Preparing dataset...
+2025-01-01 18:24:54,461 - INFO - Extracting DFT data...
+2025-01-01 18:25:02,490 - INFO - Loading experimental data...
+2025-01-01 18:25:02,522 - INFO - Calculating molecular descriptors...
+2025-01-01 18:25:03,261 - INFO - Calculating additional descriptors...
+2025-01-01 18:25:03,263 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 18:25:04,769 - INFO - Feature importance not available for RF: All arrays must be of the same length
+2025-01-01 18:25:04,770 - INFO - 
+RF Model Performance:
+2025-01-01 18:25:04,770 - INFO - Test R²: 0.3836
+2025-01-01 18:25:04,770 - INFO - Test Adjusted R²: 1.6164
+2025-01-01 18:25:04,770 - INFO - Test RMSE: 0.0083
+2025-01-01 18:25:04,770 - INFO - Test MAE: 0.0071
+2025-01-01 18:25:04,770 - INFO - Cross-validation R² (mean ± std): 0.1146 ± 0.2936
+2025-01-01 18:25:04,770 - INFO - Execution time: 0:00:01.492268
+2025-01-01 18:25:04,820 - INFO - RF model saved to: log\ex_01.01.25_18-24_PBE\pce_prediction_model_RF_PBE_eth-1735752304770.joblib
+2025-01-01 18:25:04,856 - INFO - RF results file saved to: log\ex_01.01.25_18-24_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 18:25:04,856 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 18:25:05,149 - INFO - Feature importance not available for XGBoost: All arrays must be of the same length
+2025-01-01 18:25:05,149 - INFO - 
+XGBoost Model Performance:
+2025-01-01 18:25:05,149 - INFO - Test R²: -0.8128
+2025-01-01 18:25:05,149 - INFO - Test Adjusted R²: 2.8128
+2025-01-01 18:25:05,149 - INFO - Test RMSE: 0.0143
+2025-01-01 18:25:05,149 - INFO - Test MAE: 0.0141
+2025-01-01 18:25:05,149 - INFO - Cross-validation R² (mean ± std): -0.0505 ± 0.3799
+2025-01-01 18:25:05,149 - INFO - Execution time: 0:00:00.292523
+2025-01-01 18:25:05,152 - INFO - XGBoost model saved to: log\ex_01.01.25_18-24_PBE\pce_prediction_model_XGBoost_PBE_eth-1735752305149.joblib
+2025-01-01 18:25:05,209 - INFO - XGBoost results file saved to: log\ex_01.01.25_18-24_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 18:25:05,211 - ERROR - Error in main execution: Object of type int64 is not JSON serializable
+2025-01-01 18:27:18,606 - INFO - Starting PCE prediction pipeline at 2025-01-01 18:27:18.606513
+2025-01-01 18:27:18,607 - INFO - Preparing dataset...
+2025-01-01 18:27:18,607 - INFO - Extracting DFT data...
+2025-01-01 18:27:23,849 - INFO - Loading experimental data...
+2025-01-01 18:27:23,856 - INFO - Calculating molecular descriptors...
+2025-01-01 18:27:23,920 - INFO - Calculating additional descriptors...
+2025-01-01 18:27:23,922 - INFO - 
+Training RF model and generating predictions...
+2025-01-01 18:27:25,766 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-01 18:27:25,766 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-01 18:27:25,790 - INFO - 
+RF Model Performance:
+2025-01-01 18:27:25,790 - INFO - Test R²: 0.4346
+2025-01-01 18:27:25,790 - INFO - Test Adjusted R²: 1.0652
+2025-01-01 18:27:25,790 - INFO - Test RMSE: 0.0080
+2025-01-01 18:27:25,790 - INFO - Test MAE: 0.0060
+2025-01-01 18:27:25,790 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-01 18:27:25,790 - INFO - Execution time: 0:00:01.813689
+2025-01-01 18:27:25,808 - INFO - RF model saved to: log\ex_01.01.25_18-27_PBE\pce_prediction_model_RF_PBE_eth-1735752445790.joblib
+2025-01-01 18:27:25,866 - INFO - RF results file saved to: log\ex_01.01.25_18-27_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-01 18:27:25,866 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-01 18:27:26,277 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2025-01-01 18:27:26,277 - INFO -                  Feature  Importance
+6    Molecular_Volume_A3    0.564479
+10                  LogP    0.061137
+19             deltaE_HL    0.060584
+17            deltaE_LCB    0.049062
+4    Solvation_Energy_eV    0.044925
+22            elnChemPot    0.039533
+8              Max_f_osc    0.030218
+1                   LUMO    0.026852
+3   Total_Energy_Hartree    0.021361
+12        RotatableBonds    0.016467
+2025-01-01 18:27:26,283 - INFO - 
+XGBoost Model Performance:
+2025-01-01 18:27:26,283 - INFO - Test R²: 0.3246
+2025-01-01 18:27:26,283 - INFO - Test Adjusted R²: 1.0779
+2025-01-01 18:27:26,283 - INFO - Test RMSE: 0.0087
+2025-01-01 18:27:26,283 - INFO - Test MAE: 0.0065
+2025-01-01 18:27:26,283 - INFO - Cross-validation R² (mean ± std): 0.0034 ± 0.3264
+2025-01-01 18:27:26,283 - INFO - Execution time: 0:00:00.408991
+2025-01-01 18:27:26,287 - INFO - XGBoost model saved to: log\ex_01.01.25_18-27_PBE\pce_prediction_model_XGBoost_PBE_eth-1735752446283.joblib
+2025-01-01 18:27:26,334 - INFO - XGBoost results file saved to: log\ex_01.01.25_18-27_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-01 18:27:26,337 - INFO - Comprehensive execution info saved to: log\ex_01.01.25_18-27_PBE\notion-1735752446335.txt
+2025-01-01 18:27:26,360 - INFO - 
+Model comparison saved to: log\ex_01.01.25_18-27_PBE\model_comparison_PBE_eth.xlsx
+2025-01-01 18:27:26,360 - INFO - 
+Pipeline completed. Total execution time: 0:00:07.729321
+2025-01-02 16:51:04,211 - INFO - Starting PCE prediction pipeline at 2025-01-02 16:51:04.211982
+2025-01-02 16:51:04,213 - INFO - Preparing dataset...
+2025-01-02 16:51:04,213 - INFO - Extracting DFT data...
+2025-01-02 16:51:11,928 - INFO - Loading experimental data...
+2025-01-02 16:51:11,970 - INFO - Calculating molecular descriptors...
+2025-01-02 16:51:12,828 - INFO - Calculating additional descriptors...
+2025-01-02 16:51:12,831 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 16:51:14,522 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-02 16:51:14,523 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-02 16:51:14,536 - INFO - 
+RF Model Performance:
+2025-01-02 16:51:14,536 - INFO - Test R²: 0.4346
+2025-01-02 16:51:14,536 - INFO - Test Adjusted R²: 1.0652
+2025-01-02 16:51:14,536 - INFO - Test RMSE: 0.0080
+2025-01-02 16:51:14,536 - INFO - Test MAE: 0.0060
+2025-01-02 16:51:14,536 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-02 16:51:14,536 - INFO - Execution time: 0:00:01.676341
+2025-01-02 16:51:14,548 - INFO - RF model saved to: log\ex_02.01.25_16-51_PBE\pce_prediction_model_RF_PBE_eth-1735833074536.joblib
+2025-01-02 16:51:14,582 - INFO - RF results file saved to: log\ex_02.01.25_16-51_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-02 16:51:14,583 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 16:51:14,947 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2025-01-02 16:51:14,947 - INFO -                  Feature  Importance
+6    Molecular_Volume_A3    0.564479
+10                  LogP    0.061137
+19             deltaE_HL    0.060584
+17            deltaE_LCB    0.049062
+4    Solvation_Energy_eV    0.044925
+22            elnChemPot    0.039533
+8              Max_f_osc    0.030218
+1                   LUMO    0.026852
+3   Total_Energy_Hartree    0.021361
+12        RotatableBonds    0.016467
+2025-01-02 16:51:14,951 - INFO - 
+XGBoost Model Performance:
+2025-01-02 16:51:14,951 - INFO - Test R²: 0.3246
+2025-01-02 16:51:14,952 - INFO - Test Adjusted R²: 1.0779
+2025-01-02 16:51:14,952 - INFO - Test RMSE: 0.0087
+2025-01-02 16:51:14,952 - INFO - Test MAE: 0.0065
+2025-01-02 16:51:14,952 - INFO - Cross-validation R² (mean ± std): 0.0034 ± 0.3264
+2025-01-02 16:51:14,952 - INFO - Execution time: 0:00:00.355036
+2025-01-02 16:51:14,955 - INFO - XGBoost model saved to: log\ex_02.01.25_16-51_PBE\pce_prediction_model_XGBoost_PBE_eth-1735833074952.joblib
+2025-01-02 16:51:15,001 - INFO - XGBoost results file saved to: log\ex_02.01.25_16-51_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-02 16:51:15,003 - INFO - Comprehensive execution info saved to: log\ex_02.01.25_16-51_PBE\notion-1735833075001.txt
+2025-01-02 16:51:15,022 - INFO - 
+Model comparison saved to: log\ex_02.01.25_16-51_PBE\model_comparison_PBE_eth.xlsx
+2025-01-02 16:51:15,022 - INFO - 
+Pipeline completed. Total execution time: 0:00:10.789825
+2025-01-02 17:12:18,870 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:12:18.870915
+2025-01-02 17:12:18,871 - INFO - Preparing dataset...
+2025-01-02 17:12:18,871 - INFO - Extracting DFT data...
+2025-01-02 17:12:30,078 - INFO - Loading experimental data...
+2025-01-02 17:12:30,111 - INFO - Calculating molecular descriptors...
+2025-01-02 17:12:30,774 - INFO - Calculating additional descriptors...
+2025-01-02 17:12:30,776 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:12:32,573 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-02 17:12:32,573 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-02 17:12:32,591 - INFO - 
+RF Model Performance:
+2025-01-02 17:12:32,591 - INFO - Test R²: 0.4346
+2025-01-02 17:12:32,591 - INFO - Test Adjusted R²: 1.0652
+2025-01-02 17:12:32,591 - INFO - Test RMSE: 0.0080
+2025-01-02 17:12:32,591 - INFO - Test MAE: 0.0060
+2025-01-02 17:12:32,591 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-02 17:12:32,591 - INFO - Execution time: 0:00:01.781509
+2025-01-02 17:12:32,603 - INFO - RF model saved to: log\ex_02.01.25_17-12_PBE\pce_prediction_model_RF_PBE_eth-1735834352591.joblib
+2025-01-02 17:12:32,661 - INFO - RF results file saved to: log\ex_02.01.25_17-12_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-02 17:12:32,661 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:12:33,174 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2025-01-02 17:12:33,174 - INFO -                  Feature  Importance
+6    Molecular_Volume_A3    0.564479
+10                  LogP    0.061137
+19             deltaE_HL    0.060584
+17            deltaE_LCB    0.049062
+4    Solvation_Energy_eV    0.044925
+22            elnChemPot    0.039533
+8              Max_f_osc    0.030218
+1                   LUMO    0.026852
+3   Total_Energy_Hartree    0.021361
+12        RotatableBonds    0.016467
+2025-01-02 17:12:33,179 - INFO - 
+XGBoost Model Performance:
+2025-01-02 17:12:33,179 - INFO - Test R²: 0.3246
+2025-01-02 17:12:33,179 - INFO - Test Adjusted R²: 1.0779
+2025-01-02 17:12:33,179 - INFO - Test RMSE: 0.0087
+2025-01-02 17:12:33,179 - INFO - Test MAE: 0.0065
+2025-01-02 17:12:33,179 - INFO - Cross-validation R² (mean ± std): 0.0034 ± 0.3264
+2025-01-02 17:12:33,179 - INFO - Execution time: 0:00:00.512410
+2025-01-02 17:12:33,183 - INFO - XGBoost model saved to: log\ex_02.01.25_17-12_PBE\pce_prediction_model_XGBoost_PBE_eth-1735834353179.joblib
+2025-01-02 17:12:33,233 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-12_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-02 17:12:33,234 - ERROR - Error in main execution: 'seaborn' is not a valid package style, path of style file, URL of style file, or library style name (library styles are listed in `style.available`)
+2025-01-02 17:23:16,181 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:23:16.181908
+2025-01-02 17:23:16,183 - INFO - Preparing dataset...
+2025-01-02 17:23:16,183 - INFO - Extracting DFT data...
+2025-01-02 17:23:21,358 - INFO - Loading experimental data...
+2025-01-02 17:23:21,368 - INFO - Calculating molecular descriptors...
+2025-01-02 17:23:21,437 - INFO - Calculating additional descriptors...
+2025-01-02 17:23:21,439 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:23:23,003 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-02 17:23:23,003 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-02 17:23:23,008 - INFO - 
+RF Model Performance:
+2025-01-02 17:23:23,008 - INFO - Test R²: 0.4346
+2025-01-02 17:23:23,008 - INFO - Test Adjusted R²: 1.0652
+2025-01-02 17:23:23,008 - INFO - Test RMSE: 0.0080
+2025-01-02 17:23:23,008 - INFO - Test MAE: 0.0060
+2025-01-02 17:23:23,008 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-02 17:23:23,008 - INFO - Execution time: 0:00:01.547285
+2025-01-02 17:23:23,021 - INFO - RF model saved to: log\ex_02.01.25_17-23_PBE\pce_prediction_model_RF_PBE_eth-1735835003008.joblib
+2025-01-02 17:23:23,088 - INFO - RF results file saved to: log\ex_02.01.25_17-23_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-02 17:23:23,088 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:23:23,429 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2025-01-02 17:23:23,429 - INFO -                  Feature  Importance
+6    Molecular_Volume_A3    0.564479
+10                  LogP    0.061137
+19             deltaE_HL    0.060584
+17            deltaE_LCB    0.049062
+4    Solvation_Energy_eV    0.044925
+22            elnChemPot    0.039533
+8              Max_f_osc    0.030218
+1                   LUMO    0.026852
+3   Total_Energy_Hartree    0.021361
+12        RotatableBonds    0.016467
+2025-01-02 17:23:23,435 - INFO - 
+XGBoost Model Performance:
+2025-01-02 17:23:23,435 - INFO - Test R²: 0.3246
+2025-01-02 17:23:23,435 - INFO - Test Adjusted R²: 1.0779
+2025-01-02 17:23:23,435 - INFO - Test RMSE: 0.0087
+2025-01-02 17:23:23,435 - INFO - Test MAE: 0.0065
+2025-01-02 17:23:23,435 - INFO - Cross-validation R² (mean ± std): 0.0034 ± 0.3264
+2025-01-02 17:23:23,436 - INFO - Execution time: 0:00:00.340529
+2025-01-02 17:23:23,439 - INFO - XGBoost model saved to: log\ex_02.01.25_17-23_PBE\pce_prediction_model_XGBoost_PBE_eth-1735835003436.joblib
+2025-01-02 17:23:23,495 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-23_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-02 17:23:23,495 - ERROR - Error in main execution: 'seaborn' is not a valid package style, path of style file, URL of style file, or library style name (library styles are listed in `style.available`)
+2025-01-02 17:23:43,408 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:23:43.408708
+2025-01-02 17:23:43,409 - INFO - Preparing dataset...
+2025-01-02 17:23:43,409 - INFO - Extracting DFT data...
+2025-01-02 17:23:48,599 - INFO - Loading experimental data...
+2025-01-02 17:23:48,608 - INFO - Calculating molecular descriptors...
+2025-01-02 17:23:48,675 - INFO - Calculating additional descriptors...
+2025-01-02 17:23:48,678 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:23:50,248 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-02 17:23:50,248 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-02 17:23:50,254 - INFO - 
+RF Model Performance:
+2025-01-02 17:23:50,254 - INFO - Test R²: 0.4346
+2025-01-02 17:23:50,254 - INFO - Test Adjusted R²: 1.0652
+2025-01-02 17:23:50,254 - INFO - Test RMSE: 0.0080
+2025-01-02 17:23:50,254 - INFO - Test MAE: 0.0060
+2025-01-02 17:23:50,254 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-02 17:23:50,254 - INFO - Execution time: 0:00:01.554696
+2025-01-02 17:23:50,266 - INFO - RF model saved to: log\ex_02.01.25_17-23_PBE\pce_prediction_model_RF_PBE_eth-1735835030254.joblib
+2025-01-02 17:23:50,325 - ERROR - Error in main execution: Error saving results file: [WinError 183] Cannot create a file when that file already exists: 'PCE_results_RF_PBE_eth.xlsx' -> 'log\\ex_02.01.25_17-23_PBE\\PCE_results_RF_PBE_eth.xlsx'
+2025-01-02 17:24:36,308 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:24:36.308703
+2025-01-02 17:24:36,308 - INFO - Preparing dataset...
+2025-01-02 17:24:36,308 - INFO - Extracting DFT data...
+2025-01-02 17:24:41,364 - INFO - Loading experimental data...
+2025-01-02 17:24:41,371 - INFO - Calculating molecular descriptors...
+2025-01-02 17:24:41,438 - INFO - Calculating additional descriptors...
+2025-01-02 17:24:41,441 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:24:43,015 - INFO - 
+Top 10 Most Important Features (RF):
+2025-01-02 17:24:43,015 - INFO -                   Feature  Importance
+10                   LogP    0.103718
+5         Surface_Area_A2    0.070080
+23           chemHardness    0.063906
+6     Molecular_Volume_A3    0.055235
+19              deltaE_HL    0.055199
+26  electroacceptingPower    0.052824
+16          AromaticRings    0.051844
+18          deltaE_RedOxH    0.038433
+22             elnChemPot    0.037232
+28                    LHE    0.035396
+2025-01-02 17:24:43,020 - INFO - 
+RF Model Performance:
+2025-01-02 17:24:43,020 - INFO - Test R²: 0.4346
+2025-01-02 17:24:43,020 - INFO - Test Adjusted R²: 1.0652
+2025-01-02 17:24:43,020 - INFO - Test RMSE: 0.0080
+2025-01-02 17:24:43,020 - INFO - Test MAE: 0.0060
+2025-01-02 17:24:43,020 - INFO - Cross-validation R² (mean ± std): 0.1559 ± 0.2361
+2025-01-02 17:24:43,020 - INFO - Execution time: 0:00:01.558514
+2025-01-02 17:24:43,033 - INFO - RF model saved to: log\ex_02.01.25_17-24_PBE\pce_prediction_model_RF_PBE_eth-1735835083020.joblib
+2025-01-02 17:24:43,073 - INFO - RF results file saved to: log\ex_02.01.25_17-24_PBE\PCE_results_RF_PBE_eth.xlsx
+2025-01-02 17:24:43,073 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:24:43,392 - INFO - 
+Top 10 Most Important Features (XGBoost):
+2025-01-02 17:24:43,392 - INFO -                  Feature  Importance
+6    Molecular_Volume_A3    0.564479
+10                  LogP    0.061137
+19             deltaE_HL    0.060584
+17            deltaE_LCB    0.049062
+4    Solvation_Energy_eV    0.044925
+22            elnChemPot    0.039533
+8              Max_f_osc    0.030218
+1                   LUMO    0.026852
+3   Total_Energy_Hartree    0.021361
+12        RotatableBonds    0.016467
+2025-01-02 17:24:43,399 - INFO - 
+XGBoost Model Performance:
+2025-01-02 17:24:43,399 - INFO - Test R²: 0.3246
+2025-01-02 17:24:43,399 - INFO - Test Adjusted R²: 1.0779
+2025-01-02 17:24:43,399 - INFO - Test RMSE: 0.0087
+2025-01-02 17:24:43,399 - INFO - Test MAE: 0.0065
+2025-01-02 17:24:43,399 - INFO - Cross-validation R² (mean ± std): 0.0034 ± 0.3264
+2025-01-02 17:24:43,399 - INFO - Execution time: 0:00:00.317532
+2025-01-02 17:24:43,403 - INFO - XGBoost model saved to: log\ex_02.01.25_17-24_PBE\pce_prediction_model_XGBoost_PBE_eth-1735835083399.joblib
+2025-01-02 17:24:43,463 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-24_PBE\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-02 17:24:43,466 - INFO - Comprehensive execution info saved to: log\ex_02.01.25_17-24_PBE\notion-1735835083463.txt
+2025-01-02 17:24:43,486 - INFO - 
+Model comparison saved to: log\ex_02.01.25_17-24_PBE\model_comparison_PBE_eth.xlsx
+2025-01-02 17:24:43,486 - INFO - 
+Pipeline completed. Total execution time: 0:00:07.154320
+2025-01-02 17:38:26,493 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:38:26.493887
+2025-01-02 17:38:26,494 - ERROR - Error in main execution: 'seaborn' is not a valid package style, path of style file, URL of style file, or library style name (library styles are listed in `style.available`)
+2025-01-02 17:40:19,831 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:40:19.831990
+2025-01-02 17:40:19,832 - INFO - Preparing dataset...
+2025-01-02 17:40:19,832 - INFO - Extracting DFT data...
+2025-01-02 17:40:25,170 - INFO - Loading experimental data...
+2025-01-02 17:40:25,185 - INFO - Calculating molecular descriptors...
+2025-01-02 17:40:25,278 - INFO - Calculating additional descriptors...
+2025-01-02 17:40:25,281 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:40:26,813 - INFO - Generating visualizations for RF...
+2025-01-02 17:40:28,343 - INFO - RF model saved to: log\ex_02.01.25_17-40_PBE\models\pce_prediction_model_RF_PBE_eth-1735836028331.joblib
+2025-01-02 17:40:28,388 - INFO - RF results file saved to: log\ex_02.01.25_17-40_PBE\results\PCE_results_RF_PBE_eth.xlsx
+2025-01-02 17:40:28,388 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:40:28,687 - INFO - Generating visualizations for XGBoost...
+2025-01-02 17:40:30,095 - INFO - XGBoost model saved to: log\ex_02.01.25_17-40_PBE\models\pce_prediction_model_XGBoost_PBE_eth-1735836030091.joblib
+2025-01-02 17:40:30,138 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-40_PBE\results\PCE_results_XGBoost_PBE_eth.xlsx
+2025-01-02 17:40:30,141 - INFO - Comprehensive execution info saved to: log\ex_02.01.25_17-40_PBE\execution_info_1735836030139.txt
+2025-01-02 17:40:30,162 - INFO - 
+Model comparison saved to: log\ex_02.01.25_17-40_PBE\results\model_comparison_PBE_eth.xlsx
+2025-01-02 17:40:30,162 - INFO - 
+Pipeline completed. Total execution time: 0:00:10.307764
+2025-01-02 17:46:01,951 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:46:01.951794
+2025-01-02 17:46:01,953 - INFO - Preparing dataset...
+2025-01-02 17:46:01,953 - INFO - Extracting DFT data...
+2025-01-02 17:46:04,200 - INFO - Loading experimental data...
+2025-01-02 17:46:04,208 - INFO - Calculating molecular descriptors...
+2025-01-02 17:46:04,601 - INFO - Calculating additional descriptors...
+2025-01-02 17:46:04,604 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:46:06,130 - INFO - Generating visualizations for RF...
+2025-01-02 17:46:07,463 - INFO - RF model saved to: log\ex_02.01.25_17-46_B3LYP\models\pce_prediction_model_RF_B3LYP_eth-1735836367451.joblib
+2025-01-02 17:46:07,494 - INFO - RF results file saved to: log\ex_02.01.25_17-46_B3LYP\results\PCE_results_RF_B3LYP_eth.xlsx
+2025-01-02 17:46:07,494 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:46:07,763 - INFO - Generating visualizations for XGBoost...
+2025-01-02 17:46:09,097 - INFO - XGBoost model saved to: log\ex_02.01.25_17-46_B3LYP\models\pce_prediction_model_XGBoost_B3LYP_eth-1735836369093.joblib
+2025-01-02 17:46:09,133 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-46_B3LYP\results\PCE_results_XGBoost_B3LYP_eth.xlsx
+2025-01-02 17:46:09,135 - INFO - Comprehensive execution info saved to: log\ex_02.01.25_17-46_B3LYP\execution_info_1735836369133.txt
+2025-01-02 17:46:09,153 - INFO - 
+Model comparison saved to: log\ex_02.01.25_17-46_B3LYP\results\model_comparison_B3LYP_eth.xlsx
+2025-01-02 17:46:09,153 - INFO - 
+Pipeline completed. Total execution time: 0:00:07.181363
+2025-01-02 17:52:33,976 - INFO - Starting PCE prediction pipeline at 2025-01-02 17:52:33.976368
+2025-01-02 17:52:33,978 - INFO - Preparing dataset...
+2025-01-02 17:52:33,978 - INFO - Extracting DFT data...
+2025-01-02 17:52:38,796 - INFO - Loading experimental data...
+2025-01-02 17:52:38,803 - INFO - Calculating molecular descriptors...
+2025-01-02 17:52:39,065 - INFO - Calculating additional descriptors...
+2025-01-02 17:52:39,068 - INFO - 
+Training RF model and generating predictions...
+2025-01-02 17:52:40,564 - INFO - Generating visualizations for RF...
+2025-01-02 17:52:41,908 - INFO - RF model saved to: log\ex_02.01.25_17-52_LDA\models\pce_prediction_model_RF_LDA_eth-1735836761896.joblib
+2025-01-02 17:52:41,948 - INFO - RF results file saved to: log\ex_02.01.25_17-52_LDA\results\PCE_results_RF_LDA_eth.xlsx
+2025-01-02 17:52:41,948 - INFO - 
+Training XGBoost model and generating predictions...
+2025-01-02 17:52:42,221 - INFO - Generating visualizations for XGBoost...
+2025-01-02 17:52:43,558 - INFO - XGBoost model saved to: log\ex_02.01.25_17-52_LDA\models\pce_prediction_model_XGBoost_LDA_eth-1735836763554.joblib
+2025-01-02 17:52:43,590 - INFO - XGBoost results file saved to: log\ex_02.01.25_17-52_LDA\results\PCE_results_XGBoost_LDA_eth.xlsx
+2025-01-02 17:52:43,593 - INFO - Comprehensive execution info saved to: log\ex_02.01.25_17-52_LDA\execution_info_1735836763590.txt
+2025-01-02 17:52:43,615 - INFO - 
+Model comparison saved to: log\ex_02.01.25_17-52_LDA\results\model_comparison_LDA_eth.xlsx
+2025-01-02 17:52:43,615 - INFO - 
+Pipeline completed. Total execution time: 0:00:09.614267

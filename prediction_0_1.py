@@ -11,6 +11,7 @@ from datetime import datetime
 #from prediction_1 import rf_model
 from utils.logging_utils import ExecutionLogger
 #from utils.rf_pce_model import RfPCEModel
+from utils.visualization_utils import PCEVisualizer
 from utils.prediction_model_classes import (
     RfPCEModel,
     XGBoostPCEModel,
@@ -30,7 +31,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Keyword Configuration
-DFT_METHOD = 'PBE'
+DFT_METHOD = 'LDA'
 
 # File and Directory Configuration
 CONFIG = {
@@ -49,7 +50,7 @@ CONFIG = {
     # Model Parameters
     'TEST_SIZE': 0.1,
     'RANDOM_STATE': 0,
-    'N_ESTIMATORS': 140,
+    'N_ESTIMATORS': 100,
     'CV_FOLDS': 5,
     'N_JOBS': -1,
     'MAX_FEATURES': 'sqrt',
@@ -298,6 +299,9 @@ def main():
         # Initialize execution logger
         execution_logger = ExecutionLogger(DFT_METHOD)
 
+        # Initialize visualizer with valid matplotlib style
+        visualizer = PCEVisualizer(execution_logger, style='default')
+
         validate_directories()
 
         # Prepare dataset
@@ -329,7 +333,7 @@ def main():
             )
         }
 
-        # Dictionary to store results for each model
+        # Dictionary to store results
         all_metrics = {}
         all_results = {}
         execution_times = {}
@@ -349,25 +353,18 @@ def main():
             all_metrics[model_name] = metrics
             all_results[model_name] = results
 
-            # Get and log feature importance
+            # Generate visualizations
+            logger.info(f"Generating visualizations for {model_name}...")
             try:
+                visualizer.plot_actual_vs_predicted(results, model_name)
+                visualizer.plot_error_distribution(results, model_name)
+                visualizer.plot_parity(results, model_name)
                 feature_importance = model.get_feature_importance()
-                logger.info(f"\nTop 10 Most Important Features ({model_name}):")
-                logger.info(feature_importance.head(10))
-            except ValueError as e:
-                logger.info(f"Feature importance not available for {model_name}: {str(e)}")
+                visualizer.plot_feature_importance(feature_importance, model_name)
+            except Exception as e:
+                logger.error(f"Error generating visualizations for {model_name}: {e}")
 
-            # Log performance metrics
-            logger.info(f"\n{model_name} Model Performance:")
-            logger.info(f"Test R²: {metrics['test']['r2']:.4f}")
-            logger.info(f"Test Adjusted R²: {metrics['test']['adjusted_r2']:.4f}")
-            logger.info(f"Test RMSE: {metrics['test']['rmse']:.4f}")
-            logger.info(f"Test MAE: {metrics['test']['mae']:.4f}")
-            logger.info(
-                f"Cross-validation R² (mean ± std): {metrics['cv']['r2_mean']:.4f} ± {metrics['cv']['r2_std']:.4f}")
-            logger.info(f"Execution time: {execution_time}")
-
-            # Save model with feature information
+            # Save model and results
             model_data = {
                 'model': model.model,
                 'feature_columns': model.feature_columns,
@@ -377,7 +374,6 @@ def main():
             model_path = execution_logger.save_model(model_data, model_filename)
             logger.info(f"{model_name} model saved to: {model_path}")
 
-            # Save results for each model
             results_filename = f"PCE_results_{model_name}_{DFT_METHOD}_eth.xlsx"
             results.to_excel(results_filename, index=False)
             results_log_path = execution_logger.save_results_file(results_filename)
@@ -388,7 +384,7 @@ def main():
         for model_name in all_metrics:
             all_metrics[model_name]['execution_time'] = execution_times[model_name]
 
-        # Save comprehensive execution info including all models
+        # Save comprehensive execution info
         comprehensive_info = {
             'config': CONFIG,
             'metrics': all_metrics,
@@ -402,7 +398,7 @@ def main():
         )
         logger.info(f"Comprehensive execution info saved to: {info_path}")
 
-        # Create and save a comparison summary
+        # Create and save comparison summary
         comparison_df = pd.DataFrame({
             'Model': [],
             'Test_R2': [],
@@ -440,3 +436,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
