@@ -1,62 +1,194 @@
+import scipy.stats as stats
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
-from typing import Dict
 from pathlib import Path
-import logging
-from sklearn.metrics import mean_squared_error, r2_score
-
-logger = logging.getLogger(__name__)
+from sklearn.metrics import r2_score
 
 
 class PCEVisualizer:
-    def __init__(self, execution_logger, style: str = 'seaborn-v0_8-whitegrid'):
-        # Add format specifier for consistent decimal places
-        self.decimal_format = '.2f'
+    def __init__(self, execution_logger, style: str = 'seaborn'):
         """
         Initialize visualizer with specified style and logger.
         """
         plt.style.use(style)
-        self.colors = {
-            'Training': '#2ecc71',
-            'Testing': '#e74c3c',
-            'Validation': '#3498db'
-        }
+        self.colors = {'Training': '#2ecc71', 'Testing': '#e74c3c'}
         self.logger = execution_logger
-        self.log = logger
 
-    def _validate_numeric_data(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Ensure all data is numeric, converting non-numeric values to NaN and dropping them."""
-        try:
-            numeric_data = data.apply(pd.to_numeric, errors='coerce')
-            if numeric_data.isnull().values.any():
-                self.log.warning("Non-numeric values detected and converted to NaN.")
-            return numeric_data.dropna()
-        except Exception as e:
-            self.log.error(f"Error during data validation: {e}")
-            raise
+    def _save_plot(self, fig: plt.Figure, plot_name: str) -> Path:
+        """Save plot using the execution logger."""
+        plot_path = self.logger.save_plot(fig, plot_name)
+        plt.close(fig)
+        return plot_path
 
-    def set_style(self, fig: plt.Figure) -> None:
-        """Apply consistent styling to the figure."""
-        for ax in fig.get_axes():
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.grid(True, linestyle='--', alpha=0.7)
+    def _format_percentage(self, value: float) -> str:
+        """Format percentage to two significant figures."""
+        return f"{value:.2f}%"
 
-    def _save_plot(self, fig: plt.Figure, filename: str) -> Path:
-        """Save the figure using the execution logger."""
-        try:
-            fig.tight_layout()
-            saved_path = self.logger.save_plot(fig, filename)
-            plt.close(fig)
-            self.log.info(f"Plot saved to {saved_path}")
-            return saved_path
-        except Exception as e:
-            self.log.error(f"Error saving plot: {e}")
-            raise
+    def _add_model_info(self, ax: plt.Axes, model_name: str, model_params: dict):
+        """Add model information to the plot."""
+        param_text = "\n".join([f"{k}: {v}" for k, v in model_params.items()])
+        ax.text(0.02, 0.98, f"Model: {model_name}\n{param_text}",
+                transform=ax.transAxes, bbox=dict(facecolor='white', alpha=0.8),
+                verticalalignment='top', fontsize=8)
 
-    def plot_feature_correlation(self, data: pd.DataFrame, target_col: str = 'PCE') -> Path:
+    def plot_actual_vs_predicted(self, results: pd.DataFrame, model_name: str, model_params: dict) -> Path:
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+        for dataset, ax in zip(['Training', 'Testing'], [ax1, ax2]):
+            subset = results[results['Dataset'] == dataset].copy()
+            subset = subset.sort_values('Prediction_Error', ascending=False)
+
+            ax.scatter(range(len(subset)), subset['PCE'] * 100,
+                       label='Actual PCE (%)', alpha=0.7, color='blue')
+            ax.scatter(range(len(subset)), subset['Predicted_PCE'] * 100,
+                       label='Predicted PCE (%)', alpha=0.7, color='red')
+
+            ax.set_title(f'{dataset} Set: Actual vs Predicted PCE\n(Sorted by Prediction Error)')
+            ax.set_xlabel('Dye Index')
+            ax.set_ylabel('PCE (%)')
+            ax.legend()
+            ax.grid(True, alpha=0.3)
+
+            self._add_model_info(ax, model_name, model_params)
+
+            for i, (actual, pred) in enumerate(zip(subset['PCE'], subset['Predicted_PCE'])):
+                ax.plot([i, i], [actual * 100, pred * 100], 'k-', alpha=0.3)
+
+        plt.tight_layout()
+        return self._save_plot(fig, f"{model_name}_actual_vs_predicted")
+
+    def plot_error_distribution(self, results: pd.DataFrame, model_name: str, model_params: dict) -> Path:
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        for dataset in ['Training', 'Testing']:
+            subset = results[results['Dataset'] == dataset]
+            mean_error = subset['Prediction_Error'].mean() * 100
+            std_error = subset['Prediction_Error'].std() * 100
+
+            sns.kdeplot(data=subset['Prediction_Error'] * 100,
+                        label=f"{dataset} (μ={self._format_percentage(mean_error)}, σ={self._format_percentage(std_error)})",
+                        ax=ax, fill=True, alpha=0.3,
+                        color=self.colors[dataset])
+
+        ax.set_title('Distribution of Prediction Errors')
+        ax.set_xlabel('Error (%)')
+        ax.set_ylabel('Density')
+        ax.legend()
+
+        self._add_model_info(ax, model_name, model_params)
+
+        return self._save_plot(fig, f"{model_name}_error_distribution")
+
+    def plot_parity(self, results: pd.DataFrame, model_name: str, model_params: dict) -> Path:
+        fig, ax = plt.subplots(figsize=(8, 8))
+
+        for dataset in ['Training', 'Testing']:
+            subset = results[results['Dataset'] == dataset]
+            r2 = np.corrcoef(subset['PCE'], subset['Predicted_PCE'])[0, 1] ** 2
+            ax.scatter(subset['PCE'] * 100, subset['Predicted_PCE'] * 100,
+                       label=f"{dataset} (R² = {self._format_percentage(r2 * 100)})",
+                       alpha=0.6, color=self.colors[dataset])
+
+        lims = [
+            np.min([ax.get_xlim(), ax.get_ylim()]),
+            np.max([ax.get_xlim(), ax.get_ylim()])
+        ]
+        ax.plot(lims, lims, 'k--', alpha=0.5, label='Parity')
+
+        max_val = max(lims)
+        x = np.linspace(0, max_val, 100)
+        ax.fill_between(x, x * 0.9, x * 1.1, alpha=0.1, color='gray', label='±10% Error')
+
+        ax.set_title('Parity Plot: Predicted vs Actual PCE')
+        ax.set_xlabel('Experimental PCE (%)')
+        ax.set_ylabel('Predicted PCE (%)')
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+
+        self._add_model_info(ax, model_name, model_params)
+
+        return self._save_plot(fig, f"{model_name}_parity")
+
+    def plot_feature_importance(self, importance_df: pd.DataFrame, model_name: str, model_params: dict,
+                                top_n: int = 15) -> Path:
+        """Plot top N most important features with percentages."""
+        fig, ax = plt.subplots(figsize=(12, 6))
+
+        # Ensure numeric importance values
+        top_features = importance_df.head(top_n).copy()
+        top_features.loc[:, 'Importance'] = pd.to_numeric(top_features['Importance'], errors='coerce') * 100
+
+        # Remove any rows with NaN values
+        top_features = top_features.dropna()
+
+        sns.barplot(x='Importance', y='Feature', data=top_features, ax=ax)
+
+        ax.set_title(f'Top {top_n} Most Important Features')
+        ax.set_xlabel('Relative Importance (%)')
+        ax.set_ylabel('Feature')
+
+        self._add_model_info(ax, model_name, model_params)
+
+        # Add percentage labels
+        for i, v in enumerate(top_features['Importance']):
+            if pd.notnull(v):
+                ax.text(v, i, self._format_percentage(v), va='center')
+
+        return self._save_plot(fig, f"{model_name}_feature_importance")
+
+    def plot_feature_correlation(self, data: pd.DataFrame, model_name: str, target_col: str = 'PCE') -> Path:
+        """Plot feature correlation heatmap."""
+        fig, ax = plt.subplots(figsize=(12, 10))
+
+        # Calculate correlations with target
+        correlations = data.corr()[target_col].sort_values(ascending=False)
+        top_features = correlations.index[:15]  # Top 15 correlated features
+
+        # Create correlation matrix for top features
+        correlation_matrix = data[top_features].corr()
+
+        # Plot heatmap
+        sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', center=0,
+                    fmt='.2g', ax=ax, cbar_kws={'label': 'Correlation Coefficient'})
+
+        ax.set_title('Feature Correlation Heatmap')
+        plt.xticks(rotation=45, ha='right')
+        plt.yticks(rotation=0)
+
+        plt.tight_layout()
+        return self._save_plot(fig, f"{model_name}_feature_correlation")
+
+    def plot_residuals(self, results: pd.DataFrame, model_name: str, model_params: dict) -> Path:
+        """Plot residuals analysis."""
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+
+        # Residuals vs Predicted
+        for dataset in ['Training', 'Testing']:
+            subset = results[results['Dataset'] == dataset]
+            ax1.scatter(subset['Predicted_PCE'], subset['Prediction_Error'],
+                        label=dataset, alpha=0.6, color=self.colors[dataset])
+
+        ax1.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+        ax1.set_xlabel('Predicted PCE')
+        ax1.set_ylabel('Residuals')
+        ax1.set_title('Residuals vs Predicted Values')
+        ax1.legend()
+
+        # Q-Q plot
+        for dataset in ['Training', 'Testing']:
+            subset = results[results['Dataset'] == dataset]
+            stats.probplot(subset['Prediction_Error'], dist="norm", plot=ax2)
+
+        ax2.set_title('Normal Q-Q Plot of Residuals')
+
+        self._add_model_info(ax1, model_name, model_params)
+
+        plt.tight_layout()
+        return self._save_plot(fig, f"{model_name}_residuals")
+
+    def plot_feature_correlation2(self, data: pd.DataFrame, target_col: str = 'PCE') -> Path:
         """Plot feature correlation heatmap."""
         try:
             numeric_cols = data.select_dtypes(include=[np.number]).columns
@@ -87,7 +219,7 @@ class PCEVisualizer:
             self.log.error(f"Error in plot_feature_correlation: {e}")
             raise
 
-    def plot_actual_vs_predicted(self, results: pd.DataFrame, model_name: str) -> Path:
+    def plot_actual_vs_predicted2(self, results: pd.DataFrame, model_name: str) -> Path:
         """Plot actual vs predicted values with detailed statistics."""
         try:
             fig, ax = plt.subplots(figsize=(10, 6))
@@ -226,7 +358,7 @@ class PCEVisualizer:
             self.log.error(f"Error in plot_residuals_analysis: {e}")
             raise
 
-    def plot_error_distribution(self, results: pd.DataFrame, model_name: str) -> Path:
+    def plot_error_distribution2(self, results: pd.DataFrame, model_name: str) -> Path:
         """Plot error distribution analysis."""
         try:
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
@@ -310,43 +442,4 @@ class PCEVisualizer:
             return self._save_plot(fig, "learning_curves")
         except Exception as e:
             self.log.error(f"Error in plot_learning_curves: {e}")
-            raise
-
-    def plot_pca_variance(self, variance_data: Dict) -> Path:
-        """Plot PCA explained variance ratio with percentage scales."""
-        try:
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
-
-            # Convert variance ratios to percentages
-            individual_pct = np.array(variance_data['individual']) * 100
-            cumulative_pct = np.array(variance_data['cumulative']) * 100
-
-            # Individual explained variance
-            components = range(1, len(individual_pct) + 1)
-            ax1.bar(components, individual_pct, alpha=0.8, color='steelblue')
-            ax1.set_xlabel('Principal Component')
-            ax1.set_ylabel('Explained Variance Ratio (%)')
-            ax1.set_title('Individual Explained Variance Ratio')
-
-            # Add percentage labels on top of bars
-            for i, v in enumerate(individual_pct):
-                ax1.text(i + 1, v + 1, f'{v:.1f}%', ha='center', va='bottom')
-
-            # Cumulative explained variance
-            ax2.plot(components, cumulative_pct, 'o-', color='steelblue')
-            ax2.axhline(y=95, color='r', linestyle='--', label='95% Threshold')
-            ax2.set_xlabel('Number of Components')
-            ax2.set_ylabel('Cumulative Explained Variance Ratio (%)')
-            ax2.set_title('Cumulative Explained Variance Ratio')
-            ax2.legend()
-
-            # Add percentage labels for cumulative plot
-            for i, v in enumerate(cumulative_pct):
-                ax2.text(i + 1, v + 2, f'{v:.1f}%', ha='center', va='bottom')
-
-            self.set_style(fig)
-            return self._save_plot(fig, "pca_variance")
-
-        except Exception as e:
-            self.log.error(f"Error in plot_pca_variance: {e}")
             raise
