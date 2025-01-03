@@ -5,7 +5,7 @@ import time
 import joblib
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import numpy as np
 
 class ExecutionLogger:
     """Handles logging of model execution, configs, and results."""
@@ -41,6 +41,18 @@ class ExecutionLogger:
     def _get_millisecond_timestamp(self) -> str:
         """Generate millisecond timestamp for file names."""
         return str(int(time.time() * 1000))
+
+    def _numpy_json_handler(self, obj):
+        """Handle NumPy types for JSON serialization."""
+        if isinstance(obj, (np.integer, np.int32, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float32, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.bool_):
+            return bool(obj)
+        raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
 
     def save_model(self, model, prefix: str = "model") -> Path:
         """Save model with timestamp."""
@@ -96,12 +108,12 @@ class ExecutionLogger:
                 f.write(f"Testing samples: {len(model_results[model_results['Dataset'] == 'Testing'])}\n")
 
             f.write("\n=== Configuration ===\n")
-            f.write(json.dumps(config, indent=2))
+            f.write(json.dumps(config, indent=2, default=self._numpy_json_handler))
 
             f.write("\n\n=== Performance Metrics ===\n")
             for model_name, model_metrics in metrics.items():
                 f.write(f"\n{model_name} Model:\n")
-                f.write(json.dumps(model_metrics, indent=2))
+                f.write(json.dumps(model_metrics, indent=2, default=self._numpy_json_handler))
                 f.write("\n")
 
         return info_path

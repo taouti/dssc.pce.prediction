@@ -8,6 +8,7 @@ from rdkit.Chem import Descriptors
 from mordred import Calculator
 from datetime import datetime
 
+from utils.feature_engineer import FeatureEngineer
 #from prediction_1 import rf_model
 from utils.logging_utils import ExecutionLogger
 #from utils.rf_pce_model import RfPCEModel
@@ -291,16 +292,14 @@ def prepare_dataset():
 
 
 def main():
-    """Main execution function for the PCE prediction pipeline."""
+    """Enhanced main execution function for the PCE prediction pipeline."""
     try:
         start_time = datetime.now()
-        logger.info(f"Starting PCE prediction pipeline at {start_time}")
+        logger.info(f"Starting enhanced PCE prediction pipeline at {start_time}")
 
-        # Initialize execution logger
+        # Initialize execution logger and visualizer
         execution_logger = ExecutionLogger(DFT_METHOD)
-
-        # Initialize visualizer with valid matplotlib style
-        visualizer = PCEVisualizer(execution_logger, style='default')
+        visualizer = PCEVisualizer(execution_logger)
 
         validate_directories()
 
@@ -311,6 +310,19 @@ def main():
         # Calculate additional descriptors
         logger.info("Calculating additional descriptors...")
         data = calculate_descriptors(data, CONSTANTS)
+
+        # Initialize feature engineer
+        logger.info("Initializing feature engineering...")
+        feature_engineer = FeatureEngineer(
+            n_components=0.95,  # Capture 95% of variance
+            n_features_to_select=20  # Select top 20 features
+        )
+
+        # Dictionary to store all results and metrics
+        all_metrics = {}
+        all_results = {}
+        execution_times = {}
+        feature_importance_data = {}
 
         # Initialize models
         models = {
@@ -333,17 +345,32 @@ def main():
             )
         }
 
-        # Dictionary to store results
-        all_metrics = {}
-        all_results = {}
-        execution_times = {}
+        # Generate initial visualizations
+        logger.info("Generating initial data analysis visualizations...")
+        visualizer.plot_feature_correlation(data, target_col='PCE')
 
         # Train and evaluate each model
         for model_name, model in models.items():
-            logger.info(f"\nTraining {model_name} model and generating predictions...")
+            logger.info(f"\nProcessing {model_name} model...")
             model_start_time = datetime.now()
 
-            metrics, results = model.train(data)
+            # Prepare data for this model
+            X_scaled, y, file_names, feature_columns = model.prepare_data(data)
+
+            # Apply feature engineering
+            logger.info(f"Applying feature engineering for {model_name}...")
+            X_engineered = feature_engineer.fit_transform(
+                pd.DataFrame(X_scaled, columns=feature_columns),
+                y
+            )
+
+            # Plot PCA variance explained
+            variance_data = feature_engineer.get_explained_variance()
+            visualizer.plot_pca_variance(variance_data)
+
+            # Train model with engineered features
+            logger.info(f"Training {model_name} model...")
+            metrics, results = model.train_with_engineered_features(X_engineered, y, file_names)
 
             model_end_time = datetime.now()
             execution_time = str(model_end_time - model_start_time)
@@ -353,23 +380,43 @@ def main():
             all_metrics[model_name] = metrics
             all_results[model_name] = results
 
-            # Generate visualizations
+            # Generate comprehensive visualizations
             logger.info(f"Generating visualizations for {model_name}...")
             try:
+                # Original plots
                 visualizer.plot_actual_vs_predicted(results, model_name)
                 visualizer.plot_error_distribution(results, model_name)
                 visualizer.plot_parity(results, model_name)
+
+                # New enhanced plots
+                visualizer.plot_residuals_analysis(results)
+
+                # Feature importance analysis
                 feature_importance = model.get_feature_importance()
+                feature_importance_data[model_name] = feature_importance
                 visualizer.plot_feature_importance(feature_importance, model_name)
+
+                # Generate learning curves
+                from sklearn.model_selection import learning_curve
+                train_sizes, train_scores, test_scores = learning_curve(
+                    model.model, X_engineered, y,
+                    cv=model.cv_folds,
+                    n_jobs=CONFIG['N_JOBS'],
+                    train_sizes=np.linspace(0.1, 1.0, 10)
+                )
+                visualizer.plot_learning_curves(train_sizes, train_scores, test_scores)
+
             except Exception as e:
                 logger.error(f"Error generating visualizations for {model_name}: {e}")
 
             # Save model and results
             model_data = {
                 'model': model.model,
+                'feature_engineer': feature_engineer,
                 'feature_columns': model.feature_columns,
                 'scaler': model.scaler
             }
+
             model_filename = f"pce_prediction_model_{model_name}_{DFT_METHOD}_eth"
             model_path = execution_logger.save_model(model_data, model_filename)
             logger.info(f"{model_name} model saved to: {model_path}")
@@ -377,7 +424,7 @@ def main():
             results_filename = f"PCE_results_{model_name}_{DFT_METHOD}_eth.xlsx"
             results.to_excel(results_filename, index=False)
             results_log_path = execution_logger.save_results_file(results_filename)
-            logger.info(f"{model_name} results file saved to: {results_log_path}")
+            logger.info(f"{model_name} results saved to: {results_log_path}")
 
         # Add execution times to metrics
         total_execution_time = str(datetime.now() - start_time)
@@ -388,7 +435,8 @@ def main():
         comprehensive_info = {
             'config': CONFIG,
             'metrics': all_metrics,
-            'total_execution_time': total_execution_time
+            'total_execution_time': total_execution_time,
+            'pca_variance_explained': variance_data
         }
 
         info_path = execution_logger.save_execution_info(
@@ -398,7 +446,7 @@ def main():
         )
         logger.info(f"Comprehensive execution info saved to: {info_path}")
 
-        # Create and save comparison summary
+        # Create and save model comparison summary
         comparison_df = pd.DataFrame({
             'Model': [],
             'Test_R2': [],
@@ -406,6 +454,8 @@ def main():
             'Test_MAE': [],
             'CV_R2_Mean': [],
             'CV_R2_Std': [],
+            'PCA_Components': [],
+            'Selected_Features': [],
             'Execution_Time': []
         })
 
@@ -417,6 +467,8 @@ def main():
                 'Test_MAE': [metrics['test']['mae']],
                 'CV_R2_Mean': [metrics['cv']['r2_mean']],
                 'CV_R2_Std': [metrics['cv']['r2_std']],
+                'PCA_Components': [len(variance_data['individual'])],
+                'Selected_Features': [feature_engineer.n_features],
                 'Execution_Time': [metrics['execution_time']]
             })], ignore_index=True)
 
@@ -425,7 +477,7 @@ def main():
         comparison_log_path = execution_logger.save_results_file(comparison_filename)
         logger.info(f"\nModel comparison saved to: {comparison_log_path}")
 
-        logger.info(f"\nPipeline completed. Total execution time: {total_execution_time}")
+        logger.info(f"\nEnhanced pipeline completed. Total execution time: {total_execution_time}")
 
         return True
 

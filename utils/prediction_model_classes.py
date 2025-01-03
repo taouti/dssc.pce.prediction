@@ -65,6 +65,72 @@ class BasePCEModel(ABC):
         """Create the specific model instance."""
         pass
 
+    def train_with_engineered_features(self, X_engineered: np.ndarray, y: np.ndarray, file_names: pd.Series) -> Tuple[
+        Dict, pd.DataFrame]:
+        """
+        Train the model using engineered features and evaluate its performance.
+
+        Args:
+            X_engineered: Engineered feature matrix
+            y: Target values
+            file_names: Series containing file identifiers
+
+        Returns:
+            Tuple containing (metrics_dict, results_dataframe)
+        """
+        try:
+            # Split data
+            X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
+                X_engineered, y, file_names,
+                test_size=self.test_size,
+                random_state=self.random_state
+            )
+
+            # Create and train model
+            self._create_model()
+            self.model.fit(X_train, y_train)
+
+            # Evaluate model
+            train_metrics, test_metrics = self.evaluator.evaluate_split_performance(
+                self.model, X_train, X_test, y_train, y_test
+            )
+
+            # Perform cross-validation
+            cv_results = self.evaluator.cross_validate(self.model, X_train, y_train)
+
+            # Compile metrics
+            metrics = {
+                'train': dataclasses.asdict(train_metrics),
+                'test': dataclasses.asdict(test_metrics),
+                'cv': {
+                    'r2_mean': float(np.mean(cv_results['r2'])),
+                    'r2_std': float(np.std(cv_results['r2'])),
+                    'rmse_mean': float(np.mean(cv_results['neg_rmse'])),
+                    'rmse_std': float(np.std(cv_results['neg_rmse'])),
+                    'mae_mean': float(np.mean(cv_results['neg_mae'])),
+                    'mae_std': float(np.std(cv_results['neg_mae']))
+                }
+            }
+
+            # Prepare results DataFrame
+            results = pd.DataFrame({
+                'File': file_names,
+                'PCE': y,
+                'Predicted_PCE': self.model.predict(X_engineered),
+                'Dataset': 'Training'
+            })
+
+            # Mark test set samples
+            results.loc[results['File'].isin(test_files), 'Dataset'] = 'Testing'
+
+            # Calculate prediction errors
+            results['Prediction_Error'] = abs(results['Predicted_PCE'] - results['PCE'])
+
+            return metrics, results
+
+        except Exception as e:
+            raise RuntimeError(f"Error in train_with_engineered_features: {e}")
+
     def train(self, data: pd.DataFrame) -> Tuple[Dict, pd.DataFrame]:
         """
         Train the model and evaluate its performance.
