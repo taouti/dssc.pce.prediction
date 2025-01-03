@@ -48,7 +48,7 @@ CONFIG = {
     'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
 
     # Model Parameters
-    'TEST_SIZE': 0.1,
+    'TEST_SIZE': 0.2,
     'RANDOM_STATE': 0,
     'N_ESTIMATORS': 100,
     'CV_FOLDS': 5,
