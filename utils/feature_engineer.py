@@ -30,10 +30,14 @@ class FeatureEngineer:
         self.selected_features = None
         self.feature_scores = None
         self.fitted = False
+        self.feature_names = None
 
     def fit_transform(self, X, y=None):
         """Fit and transform the data using PCA and feature selection."""
         try:
+            # Store feature names
+            self.feature_names = X.columns.tolist()
+            
             # Scale the data
             X_scaled = self.scaler.fit_transform(X)
 
@@ -45,15 +49,16 @@ class FeatureEngineer:
             if y is not None:
                 # Feature selection on original scaled features
                 self.feature_selector.fit(X_scaled, y)
-                self.selected_features = X.columns[self.feature_selector.get_support()].tolist()
+                self.selected_features = [self.feature_names[i] for i in range(len(self.feature_names)) 
+                                       if self.feature_selector.get_support()[i]]
 
                 # Create feature scores dataframe
                 self.feature_scores = pd.DataFrame({
-                    'feature': X.columns,
+                    'feature': self.feature_names,
                     'score': self.feature_selector.scores_
                 }).sort_values('score', ascending=False)
 
-                # Select features
+                # Select features using feature names
                 X_selected = X_scaled[:, self.feature_selector.get_support()]
                 logger.info(f"Selected {len(self.selected_features)} features")
 
@@ -76,11 +81,16 @@ class FeatureEngineer:
             raise ValueError("FeatureEngineer must be fitted before transform")
 
         try:
+            # Scale the data
             X_scaled = self.scaler.transform(X)
+            
+            # Apply PCA transformation
             X_pca = self.pca.transform(X_scaled)
 
             if self.selected_features is not None:
-                X_selected = X_scaled[:, self.feature_selector.get_support()]
+                # Get indices of selected features
+                selected_indices = [self.feature_names.index(feat) for feat in self.selected_features]
+                X_selected = X_scaled[:, selected_indices]
                 return np.hstack([X_pca, X_selected])
 
             return X_pca

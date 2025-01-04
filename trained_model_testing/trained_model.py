@@ -14,7 +14,7 @@ DFT_METHOD = 'PBE'
 CONFIG = {
     'DFT_OUTPUT_DIR': f'./outputs_{DFT_METHOD}_ethanol',
     'MOL_DIR': f'./mol_{DFT_METHOD}_ethanol',
-    'MODEL_PATH': f'pce_prediction_model_RF_{DFT_METHOD}_eth.joblib',
+    'MODEL_PATH': f'pce_prediction_model_XGBoost_{DFT_METHOD}_eth.joblib',
     'OUTPUT_FILE': f'PCE_predictions_{DFT_METHOD}_eth.xlsx',
 }
 
@@ -36,6 +36,7 @@ COSMO_PATTERNS = {
     'Solvation_Energy_eV': r"Dielectric \(solvation\) energy\s+=\s+[-\d.]+\s+([-\d.]+)",
     'Surface_Area_A2': r"Surface area of cavity \[A\*\*2\]\s*=\s+([-\d.]+)",
     'Molecular_Volume_A3': r"Total Volume of cavity \[A\*\*3\]\s*=\s+([-\d.]+)",
+    #'COSMO_Screening_Charge': r"cosmo\s*=\s*([-\d.]+)"
 }
 
 EXCITATION_PATTERN = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
@@ -100,15 +101,44 @@ def extract_dft_data():
                     matches = re.findall(pattern, content)
                     record[key] = float(matches[-1]) if matches else None
 
+                # Try different excitation patterns
+                # Original pattern
                 excitations = re.findall(EXCITATION_PATTERN, content)
-                if excitations:
+
+                # New pattern for TDDFT format
+                tddft_pattern = r"\s*\d+\s*->\s*\d+[+-]\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)"
+                tddft_excitations = re.findall(tddft_pattern, content)
+
+                if excitations:  # If original pattern matches
                     max_excitation = max([(float(ex[0]), float(ex[1]), float(ex[2]))
                                           for ex in excitations if ex[2] != ''],
                                          key=lambda x: x[2],
                                          default=(None, None, None))
                     record['Max_Absorption_nm'] = max_excitation[1]
                     record['Max_f_osc'] = max_excitation[2]
-                else:
+
+                elif tddft_excitations:  # If TDDFT pattern matches
+                    # Convert all valid excitations to floats and filter out any with empty f_osc
+                    valid_excitations = []
+                    for ex in tddft_excitations:
+                        try:
+                            # ex[2] is TD-ex[nm], ex[5] is f_osc
+                            nm = float(ex[2])
+                            f_osc = float(ex[5])
+                            valid_excitations.append((nm, f_osc))
+                        except (ValueError, IndexError):
+                            continue
+
+                    if valid_excitations:
+                        # Find excitation with maximum oscillator strength
+                        max_excitation = max(valid_excitations, key=lambda x: x[1])
+                        record['Max_Absorption_nm'] = max_excitation[0]
+                        record['Max_f_osc'] = max_excitation[1]
+                    else:
+                        record['Max_Absorption_nm'] = None
+                        record['Max_f_osc'] = None
+
+                else:  # If no patterns match
                     record['Max_Absorption_nm'] = None
                     record['Max_f_osc'] = None
 
@@ -122,22 +152,30 @@ def extract_dft_data():
 
 def predict_pce():
     try:
-        # Ensure the log directory exists
-        log_dir = "log"
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-
         # Load trained model
         logger.info("Loading trained model...")
         model_data = joblib.load(CONFIG['MODEL_PATH'])
 
+        # The model file should contain both the model and the feature list
         if isinstance(model_data, dict):
             model = model_data['model']
             feature_columns = model_data['feature_columns']
             scaler = model_data.get('scaler')
         else:
+            # If it's just the model, we'll need to specify the features explicitly
             model = model_data
-            feature_columns = []  # Define explicitly if needed
+            # You'll need to specify the exact features used during training
+            feature_columns = [
+                'HOMO', 'LUMO', 'Dipole_Moment', 'Total_Energy_Hartree',
+                'Solvation_Energy_eV', 'Max_Absorption_nm', 'Max_f_osc',
+                'Mass', 'LogP', 'TPSA', 'RotatableBonds', 'HBondDonors',
+                'HBondAcceptors', 'RingCount', 'AromaticRings',
+                'deltaE_LCB', 'deltaE_RedOxH', 'deltaE_HL', 'IP', 'EA',
+                'elnChemPot', 'chemHardness', 'electronegativity',
+                'electrophilicityIndex', 'electroacceptingPower',
+                'electrodonatingPower', 'LHE'
+                # Add any missing features that were used during training
+            ]
             scaler = None
 
         # Extract descriptors from mol files
@@ -176,7 +214,8 @@ def predict_pce():
         data['electrophilicityIndex'] = data['elnChemPot'] ** 2 / data['chemHardness']
         data['electroacceptingPower'] = ((data['IP'] + 3 * data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
         data['electrodonatingPower'] = ((3 * data['IP'] + data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
-        data['LHE'] = (1 - 10 ** -data['Max_f_osc']) * 100
+
+        data = prepare_prediction_data()
 
         # Ensure we have all required features
         missing_features = [col for col in feature_columns if col not in data.columns]
@@ -189,21 +228,65 @@ def predict_pce():
         # Handle missing values
         features = features.fillna(features.mean())
 
-        if scaler:
+        # Scale features if a scaler was used during training
+        if scaler is not None:
             features = scaler.transform(features)
 
+        # Predict PCE
+        logger.info("Predicting PCE values...")
         predictions = model.predict(features)
         data['Predicted_PCE'] = predictions
 
-        logger.info("Saving predictions...")
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_file = f"{log_dir}/PCE_predictions_{timestamp}.xlsx"
-        data.to_excel(output_file, index=False)
-        logger.info(f"Predictions saved to {output_file}")
+        # Save results
+        logger.info("Saving predictions to file...")
+        data.to_excel(CONFIG['OUTPUT_FILE'], index=False)
+        logger.info(f"Predictions saved to {CONFIG['OUTPUT_FILE']}.")
 
     except Exception as e:
         logger.error(f"Error during PCE prediction: {e}")
         raise
+
+def prepare_prediction_data():
+    """Prepare the data for prediction, including all feature calculations."""
+    # Extract descriptors from mol files
+    logger.info("Calculating molecular descriptors...")
+    mordred_descriptors_list = []
+    for mol_filename in os.listdir(CONFIG['MOL_DIR']):
+        if mol_filename.endswith('.mol'):
+            mol_path = os.path.join(CONFIG['MOL_DIR'], mol_filename)
+            desc = calculate_molecular_descriptors(mol_path)
+            if desc:
+                desc['File'] = mol_filename.replace('.mol', '')
+                mordred_descriptors_list.append(desc)
+
+    if not mordred_descriptors_list:
+        raise ValueError("No valid molecular descriptors were calculated.")
+
+    mordred_df = pd.DataFrame(mordred_descriptors_list)
+
+    # Extract DFT data
+    logger.info("Extracting DFT data...")
+    dft_df = extract_dft_data()
+
+    # Merge datasets
+    data = dft_df.merge(mordred_df, on='File', how='inner')
+
+    # Calculate additional descriptors
+    logger.info("Calculating additional quantum chemical descriptors...")
+    data['deltaE_LCB'] = data['LUMO'] - CONSTANTS['ECB_TiO2']
+    data['deltaE_RedOxH'] = CONSTANTS['Eredox_iodide'] - data['HOMO']
+    data['deltaE_HL'] = data['LUMO'] - data['HOMO']
+    data['IP'] = -data['HOMO']
+    data['EA'] = -data['LUMO']
+    data['elnChemPot'] = (-1 / 2) * (data['IP'] + data['EA'])
+    data['chemHardness'] = (1 / 2) * (data['IP'] - data['EA'])
+    data['electronegativity'] = -data['elnChemPot']
+    data['electrophilicityIndex'] = data['elnChemPot'] ** 2 / data['chemHardness']
+    data['electroacceptingPower'] = ((data['IP'] + 3 * data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
+    data['electrodonatingPower'] = ((3 * data['IP'] + data['EA']) ** 2) / (16 * (data['IP'] - data['EA']))
+    data['LHE'] = (1 - 10 ** -data['Max_f_osc']) * 100
+
+    return data
 
 if __name__ == "__main__":
     predict_pce()

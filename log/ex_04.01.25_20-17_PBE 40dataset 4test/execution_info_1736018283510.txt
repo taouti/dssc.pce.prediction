@@ -1,0 +1,119 @@
+=== Execution Information ===
+Timestamp: 2025.01.04_20-17-49
+
+=== Dataset Information ===
+
+rf Model:
+Total samples: 40
+Training samples: 36
+Testing samples: 4
+
+xgboost Model:
+Total samples: 40
+Training samples: 36
+Testing samples: 4
+
+ensemble Model:
+Total samples: 40
+Training samples: 36
+Testing samples: 4
+
+=== Configuration ===
+{
+  "rf": {
+    "n_estimators": 500,
+    "max_depth": 6,
+    "min_samples_split": 3,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "max_samples": 0.8,
+    "n_jobs": -1
+  },
+  "xgboost": {
+    "n_estimators": 1000,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "subsample": 0.7,
+    "colsample_bytree": 0.7,
+    "gamma": 0,
+    "reg_alpha": 0,
+    "reg_lambda": 0.1,
+    "scale_pos_weight": 1.0
+  },
+  "ensemble": {
+    "rf_params": {
+      "n_estimators": 500,
+      "max_depth": 6,
+      "min_samples_split": 3,
+      "min_samples_leaf": 2,
+      "max_features": "sqrt",
+      "max_samples": 0.8,
+      "n_jobs": -1
+    },
+    "xgb_params": {
+      "n_estimators": 1000,
+      "learning_rate": 0.03,
+      "max_depth": 3,
+      "min_child_weight": 1,
+      "subsample": 0.7,
+      "colsample_bytree": 0.7,
+      "gamma": 0,
+      "reg_alpha": 0,
+      "reg_lambda": 0.1,
+      "scale_pos_weight": 1.0
+    }
+  }
+}
+
+=== Performance Metrics ===
+
+rf Model:
+{
+  "train": {
+    "r2": 0.7710199915955648,
+    "rmse": 0.00835912973671697,
+    "mae": 0.0066410667283950614
+  },
+  "test": {
+    "r2": 0.7243637920608019,
+    "rmse": 0.008276237943098336,
+    "mae": 0.006827301646825396
+  }
+}
+
+xgboost Model:
+{
+  "train": {
+    "r2": 0.7280329981196378,
+    "rmse": 0.009110042206615458,
+    "mae": 0.006967295142801273
+  },
+  "test": {
+    "r2": 0.71841607610748,
+    "rmse": 0.008365054276999552,
+    "mae": 0.007171007010340693
+  }
+}
+
+ensemble Model:
+{
+  "train": {
+    "r2": 0.932164341073688,
+    "rmse": 0.004603711862299194,
+    "mae": 0.0037067222309143063
+  },
+  "test": {
+    "r2": 0.9157623465415843,
+    "rmse": 0.0047744687036760285,
+    "mae": 0.0041028842730716055
+  },
+  "cv": {
+    "r2_mean": 0.2569019066521417,
+    "r2_std": 0.2147816704428647,
+    "rmse_mean": 0.013901629677686878,
+    "rmse_std": 0.0014902173041638535,
+    "mae_mean": 0.01155567313803855,
+    "mae_std": 0.0018781621494483158
+  }
+}

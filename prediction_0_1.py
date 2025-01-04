@@ -7,17 +7,22 @@ from rdkit import Chem
 from rdkit.Chem import Descriptors
 from mordred import Calculator
 from datetime import datetime
+from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.feature_selection import SelectFromModel, mutual_info_regression
+from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
+from sklearn.ensemble import VotingRegressor
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+import pickle
+from pathlib import Path
 
-#from prediction_1 import rf_model
 from utils.logging_utils import ExecutionLogger
-#from utils.rf_pce_model import RfPCEModel
 from utils.visualization_utils import PCEVisualizer
 from utils.prediction_model_classes import (
     RfPCEModel,
     XGBoostPCEModel,
-#    LightGBMPCEModel,
-#    SvmPCEModel
+    EnsemblePCEModel,
 )
+
 
 # Setup logging
 logging.basicConfig(
@@ -46,17 +51,54 @@ CONFIG = {
     'DFT_DATASET': f'dyes_DFT_{DFT_METHOD}_eth_dataset.xlsx',
     'COMPREHENSIVE_RESULTS': f'PCE_results_{DFT_METHOD}_eth.xlsx',
     'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
-
     # Model Parameters
-    'TEST_SIZE': 0.05,
-    'RANDOM_STATE': 0,
-    'N_ESTIMATORS': 400,
-    'CV_FOLDS': 10,
-    'N_JOBS': -1,
-    'MAX_FEATURES': 'sqrt',
-    'MAX_SAMPLES': 0.8,
-    'LEARNING_RATE': 0.03,
-    'max_depth': 8,
+    'TEST_SIZE': 0.15,  # 0.1 got 4 samples, 0.2 got 8 and 0.15 got 6
+    'RANDOM_STATE': 42,
+    
+    # Random Forest Parameters
+    'RF_PARAMS': {
+        'n_estimators': 500,  # Increased from 200
+        'max_depth': 6,      # Slightly increased
+        'min_samples_split': 3,  # Reduced
+        'min_samples_leaf': 2,
+        'max_features': 'sqrt',
+        'max_samples': 0.8,
+        'n_jobs': -1
+    },
+    
+    # XGBoost Parameters
+    'XGBOOST_PARAMS': {
+        'n_estimators': 1000,           # Increased from 150
+        'learning_rate': 0.03,         # Increased from 0.01
+        'max_depth': 3,                # Reduced from 6
+        'min_child_weight': 1,         # Reduced from 3
+        'subsample': 0.7,
+        'colsample_bytree': 0.7,
+        'gamma': 0,                 # Reduced from 0.1
+        'reg_alpha': 0,              # Removed L1 regularization
+        'reg_lambda': 0.1,             # Reduced L2 regularization
+        'scale_pos_weight': 1.0,
+    },
+    
+    # Cross-validation Parameters
+    'CV_FOLDS': 5,
+    'CV_REPEATS': 3,
+    
+    # Feature Selection
+    'FEATURE_SELECTION': {
+        'n_features_to_select': 15,    # Increased from 10
+        'importance_threshold': 0.02,   # Decreased from 0.05
+        'correlation_threshold': 0.95,  # Keep at 0.95
+        'force_include': ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment']  # Force include these features
+    },
+    
+    # Ensemble Parameters
+    'ENSEMBLE': {
+        'weights': [0.6, 0.4]  # RF weight, XGBoost weight
+    },
+    
+    # Feature Scaling
+    'FEATURE_SCALING': True
 }
 
 
@@ -74,7 +116,7 @@ CONSTANTS = {
 }
 
 
-# Regular Expression Patterns
+# Updated patterns for better accuracy
 PATTERNS = {
     'HOMO': r"Energy of Highest Occupied Molecular Orbital:\s+[-\d.]+Ha\s+([-\d.]+)eV",
     'LUMO': r"Energy of Lowest Unoccupied Molecular Orbital:\s+[-\d.]+Ha\s+([-\d.]+)eV",
@@ -86,10 +128,11 @@ COSMO_PATTERNS = {
     'Solvation_Energy_eV': r"Dielectric \(solvation\) energy\s+=\s+[-\d.]+\s+([-\d.]+)",
     'Surface_Area_A2': r"Surface area of cavity \[A\*\*2\]\s*=\s+([-\d.]+)",
     'Molecular_Volume_A3': r"Total Volume of cavity \[A\*\*3\]\s*=\s+([-\d.]+)",
-    #'COSMO_Screening_Charge': r"cosmo\s*=\s*([-\d.]+)"
 }
 
-EXCITATION_PATTERN = r"\s*\d+ ->\s*\d+\s+([-\d.]+)\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)"
+# New pattern to match TDDFT excitation data format
+TDDFT_EXCITATION_PATTERN = r"\s*(\d+)\s*->\s*(\d+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)"
+
 
 
 def validate_directories():
@@ -167,23 +210,60 @@ def extract_dft_data():
             with open(file_path, 'r') as file:
                 content = file.read()
 
+                # Extract HOMO, LUMO, Dipole
                 for key, pattern in PATTERNS.items():
                     matches = re.findall(pattern, content)
-                    record[key] = float(matches[-1]) if matches else None
+                    if matches:
+                        try:
+                            record[key] = float(matches[-1])
+                            logger.debug(f"Extracted {key}: {record[key]} from {filename}")
+                        except ValueError:
+                            record[key] = None
 
-                for key, pattern in COSMO_PATTERNS.items():
-                    matches = re.findall(pattern, content)
-                    record[key] = float(matches[-1]) if matches else None
+                # Extract TDDFT excitation data
+                excitations = []
+                found_tddft_section = False
 
-                excitations = re.findall(EXCITATION_PATTERN, content)
+                for line in content.split('\n'):
+                    # Look for the start of TDDFT section
+                    if "TDDFT excitations singlet_alda" in line:
+                        found_tddft_section = True
+                        continue
+
+                    if found_tddft_section:
+                        match = re.match(TDDFT_EXCITATION_PATTERN, line)
+                        if match:
+                            try:
+                                # Groups: from_orbital, to_orbital, td_ev, ks_ev, td_nm, ks_nm, ha, f_osc, overlap
+                                groups = match.groups()
+                                excitations.append({
+                                    'wavelength': float(groups[4]),  # td_nm
+                                    'oscillator_strength': float(groups[7]),  # f_osc
+                                    'energy_ev': float(groups[2])  # td_ev
+                                })
+                            except (ValueError, IndexError):
+                                continue
+
                 if excitations:
-                    max_excitation = max([(float(ex[0]), float(ex[1]), float(ex[2]))
-                                          for ex in excitations], key=lambda x: x[2])
-                    record['Max_Absorption_nm'] = max_excitation[1]
-                    record['Max_f_osc'] = max_excitation[2]
+                    # Find excitation with maximum oscillator strength
+                    max_excitation = max(excitations, key=lambda x: x['oscillator_strength'])
+                    record['Max_Absorption_nm'] = max_excitation['wavelength']
+                    record['Max_f_osc'] = max_excitation['oscillator_strength']
+                    record['Max_Excitation_eV'] = max_excitation['energy_ev']
                 else:
                     record['Max_Absorption_nm'] = None
                     record['Max_f_osc'] = None
+                    record['Max_Excitation_eV'] = None
+
+                # Add validation checks
+                if record.get('Max_Absorption_nm') is not None:
+                    if not (200 <= record['Max_Absorption_nm'] <= 800):
+                        logger.warning(f"Suspicious absorption value in {filename}: {record['Max_Absorption_nm']}nm")
+
+                if record.get('HOMO') is not None and record.get('LUMO') is not None:
+                    if not (-10 <= record['HOMO'] <= 0) or not (-10 <= record['LUMO'] <= 0):
+                        logger.warning(
+                            f"Suspicious HOMO/LUMO values in {filename}: HOMO={record['HOMO']}eV, LUMO={record['LUMO']}eV")
 
             data.append(record)
 
@@ -192,7 +272,6 @@ def extract_dft_data():
     except Exception as e:
         logger.error(f"Error during DFT data extraction: {e}")
         raise
-
 
 def calculate_descriptors(data, constants):
     """
@@ -222,6 +301,150 @@ def calculate_descriptors(data, constants):
     except Exception as e:
         logger.error(f"Error calculating descriptors: {e}")
         raise
+
+
+def select_features(X, y, feature_names):
+    """
+    Select the most important features using multiple methods.
+    
+    Args:
+        X (np.array or pd.DataFrame): Feature matrix
+        y (np.array or pd.Series): Target values
+        feature_names (list): List of feature names
+    
+    Returns:
+        list: Selected feature names
+    """
+    try:
+        # First, ensure forced features are included
+        forced_features = [f for f in CONFIG['FEATURE_SELECTION']['force_include'] 
+                         if f in feature_names]
+        remaining_features = [f for f in feature_names 
+                            if f not in forced_features]
+        
+        # Initialize Random Forest for feature selection on remaining features
+        X_remaining = X[remaining_features]
+        
+        rf_params = {
+            'n_estimators': CONFIG['RF_PARAMS']['n_estimators'],
+            'max_depth': CONFIG['RF_PARAMS']['max_depth'],
+            'min_samples_split': CONFIG['RF_PARAMS']['min_samples_split'],
+            'min_samples_leaf': CONFIG['RF_PARAMS']['min_samples_leaf'],
+            'max_features': CONFIG['RF_PARAMS']['max_features'],
+            'n_jobs': CONFIG['RF_PARAMS']['n_jobs'],
+            'random_state': CONFIG['RANDOM_STATE']
+        }
+        
+        rf_model = RfPCEModel(**rf_params)
+        rf_model._create_model()
+        rf_model.model.fit(X_remaining, y)
+        
+        # Get feature importance from Random Forest
+        rf_importance = pd.DataFrame({
+            'feature': remaining_features,
+            'importance': rf_model.model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        # Calculate mutual information scores
+        mi_scores = mutual_info_regression(X_remaining, y)
+        mi_importance = pd.DataFrame({
+            'feature': remaining_features,
+            'importance': mi_scores
+        }).sort_values('importance', ascending=False)
+        
+        # Combine both methods
+        combined_importance = pd.DataFrame({
+            'feature': remaining_features,
+            'rf_importance': rf_importance.set_index('feature').loc[remaining_features, 'importance'],
+            'mi_importance': mi_importance.set_index('feature').loc[remaining_features, 'importance']
+        })
+        
+        # Normalize scores
+        combined_importance['rf_importance'] = combined_importance['rf_importance'] / combined_importance['rf_importance'].max()
+        combined_importance['mi_importance'] = combined_importance['mi_importance'] / combined_importance['mi_importance'].max()
+        
+        # Calculate combined score
+        combined_importance['combined_score'] = (
+            combined_importance['rf_importance'] * 0.7 +  # Give more weight to RF
+            combined_importance['mi_importance'] * 0.3    # Less weight to MI
+        )
+        
+        # Sort by combined score
+        combined_importance = combined_importance.sort_values('combined_score', ascending=False)
+        
+        # Select top features based on configuration (excluding forced features)
+        n_additional_features = min(
+            CONFIG['FEATURE_SELECTION']['n_features_to_select'] - len(forced_features),
+            len(remaining_features)
+        )
+        selected_features = forced_features + combined_importance.head(n_additional_features).index.tolist()
+        
+        # Remove highly correlated features (but never remove forced features)
+        if len(selected_features) > 1:
+            X_selected = X[selected_features]
+            corr_matrix = pd.DataFrame(X_selected).corr().abs()
+            
+            # Create a mask for highly correlated pairs
+            upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
+            
+            # Find features to drop (never drop forced features)
+            to_drop = []
+            for i in range(len(upper.columns)):
+                for j in range(i + 1, len(upper.columns)):
+                    if upper.iloc[i, j] > CONFIG['FEATURE_SELECTION']['correlation_threshold']:
+                        feat_i = upper.columns[i]
+                        feat_j = upper.columns[j]
+                        
+                        # Skip if both features are forced
+                        if feat_i in forced_features and feat_j in forced_features:
+                            continue
+                        
+                        # Never drop a forced feature
+                        if feat_i in forced_features:
+                            to_drop.append(feat_j)
+                        elif feat_j in forced_features:
+                            to_drop.append(feat_i)
+                        # For non-forced features, drop the one with lower importance
+                        else:
+                            if combined_importance.loc[feat_i, 'combined_score'] < combined_importance.loc[feat_j, 'combined_score']:
+                                to_drop.append(feat_i)
+                            else:
+                                to_drop.append(feat_j)
+            
+            # Remove duplicates from to_drop list
+            to_drop = list(set(to_drop))
+            
+            # Update selected features
+            selected_features = [f for f in selected_features if f not in to_drop]
+        
+        logger.info(f"Selected {len(selected_features)} features: {', '.join(selected_features)}")
+        return selected_features
+        
+    except Exception as e:
+        logger.error(f"Error in feature selection: {e}")
+        raise
+
+
+def prepare_stratified_splits(X, y):
+    """
+    Prepare stratified splits for cross-validation.
+    
+    Args:
+        X (np.array): Feature matrix
+        y (np.array): Target values
+    
+    Returns:
+        tuple: X, y, and stratification labels
+    """
+    # Ensure y is a numpy array and reshape it
+    y_np = np.array(y).reshape(-1, 1)
+    
+    # Create bins for stratification
+    n_bins = min(5, len(y) // 5)  # Ensure we don't have too many bins for small datasets
+    kbd = KBinsDiscretizer(n_bins=n_bins, encode='ordinal', strategy='quantile')
+    stratification_labels = kbd.fit_transform(y_np).ravel()
+    
+    return X, y, stratification_labels
 
 
 def prepare_dataset():
@@ -256,19 +479,18 @@ def prepare_dataset():
         mordred_df = pd.DataFrame(mordred_descriptors_list)
 
         # Remove columns with all NaN values or constant values
-        # But ensure we keep 'Mass' and 'SMILES' columns
         essential_columns = ['Mass', 'SMILES', 'File']
         other_columns = [col for col in mordred_df.columns if col not in essential_columns]
-
-        # Only clean non-essential columns
+        
+        # Clean non-essential columns
         mordred_df_cleaned = mordred_df[essential_columns].copy()
         temp_df = mordred_df[other_columns].copy()
-
-        # Remove problematic columns from non-essential columns only
+        
+        # Remove problematic columns
         temp_df = temp_df.dropna(axis=1, how='all')
         constant_cols = temp_df.columns[temp_df.nunique() == 1]
         temp_df = temp_df.drop(columns=constant_cols)
-
+        
         # Combine back with essential columns
         mordred_df = pd.concat([mordred_df_cleaned, temp_df], axis=1)
 
@@ -279,15 +501,56 @@ def prepare_dataset():
         # Merge datasets
         data = dft_df.merge(experimental_df, on='File', how='inner').merge(mordred_df, on='File', how='inner')
 
-        # Handle missing data
-        numeric_columns = data.select_dtypes(include=[np.number]).columns
-        data[numeric_columns] = data[numeric_columns].fillna(data[numeric_columns].mean())
+        # Calculate additional descriptors
+        data = calculate_descriptors(data, CONSTANTS)
 
-        return data
+        # Handle missing data with more sophisticated imputation
+        numeric_columns = data.select_dtypes(include=[np.number]).columns
+        for col in numeric_columns:
+            if data[col].isnull().any():
+                # Use median for highly skewed features
+                if abs(data[col].skew()) > 1:
+                    data[col] = data[col].fillna(data[col].median())
+                else:
+                    data[col] = data[col].fillna(data[col].mean())
+
+        # Save complete dataset with all descriptors before feature selection and scaling
+        complete_data = data.copy()
+
+        # Select features
+        feature_columns = [col for col in data.columns if col not in ['File', 'PCE', 'SMILES']]
+        selected_features = select_features(data[feature_columns], data['PCE'], feature_columns)
+        data = data[['File', 'PCE', 'SMILES'] + selected_features].copy()
+
+        # Scale features
+        if CONFIG['FEATURE_SCALING']:
+            scaler = StandardScaler()
+            data[selected_features] = scaler.fit_transform(data[selected_features])
+
+        return data, complete_data
 
     except Exception as e:
         logger.error(f"Error preparing dataset: {e}")
         raise
+
+
+def prepare_pce_results(results_df: pd.DataFrame) -> pd.DataFrame:
+    """Prepare PCE results DataFrame by selecting relevant columns."""
+    pce_results = results_df[['File', 'PCE', 'PredictedPCE', 'Absolute_Error', 'Error_Percentage', 'Dataset']]
+    return pce_results
+
+
+def generate_visualizations(model, model_name: str, output_dir: Path) -> None:
+    """Generate and save visualizations for model results."""
+    try:
+        visualizer = PCEVisualizer(logging.getLogger())
+        # Create plots directory at the same level as results directory
+        visualizer.output_dir = output_dir.parent / "plots"
+        os.makedirs(visualizer.output_dir, exist_ok=True)
+        visualizer.visualize_results(model, model_name)
+        logging.info(f"Generating visualizations for {model_name}...")
+    except Exception as e:
+        logging.error(f"Error generating visualizations for {model_name}: {e}")
 
 
 def main():
@@ -296,156 +559,219 @@ def main():
         start_time = datetime.now()
         logger.info(f"Starting PCE prediction pipeline at {start_time}")
 
-        execution_logger = ExecutionLogger(DFT_METHOD)
-        visualizer = PCEVisualizer(execution_logger, style='default')
+        # Create execution logger with correct parameters
+        execution_logger = ExecutionLogger(
+            dft=DFT_METHOD,
+            base_log_dir="log"
+        )
 
+        # Initialize visualizer
+        visualizer = PCEVisualizer(execution_logger)
+
+        # Validate directories
         validate_directories()
 
         # Prepare dataset
         logger.info("Preparing dataset...")
-        data = prepare_dataset()
+        data, complete_data = prepare_dataset()
+        
+        # Save all descriptors (using complete data before feature selection and scaling)
+        logger.info("Saving all descriptors...")
+        descriptors_path = execution_logger.save_descriptors(complete_data, DFT_METHOD)
+        logger.info(f"All descriptors saved to: {descriptors_path}")
 
-        # Calculate additional descriptors
-        logger.info("Calculating additional descriptors...")
-        data = calculate_descriptors(data, CONSTANTS)
+        # Train and evaluate Random Forest model
+        logger.info("\nTraining RF model and generating predictions...")
+        rf_model = RfPCEModel(
+            test_size=CONFIG['TEST_SIZE'],
+            random_state=CONFIG['RANDOM_STATE'],
+            cv_folds=CONFIG['CV_FOLDS'],
+            **CONFIG['RF_PARAMS']
+        )
+        rf_model._create_model()  # Initialize the model
+        rf_metrics, rf_results = rf_model.train(data)
 
-        # Initialize models with their parameters
-        models = {
-            'RF': {
-                'model': RfPCEModel(
-                    test_size=CONFIG['TEST_SIZE'],
-                    random_state=CONFIG['RANDOM_STATE'],
-                    n_estimators=CONFIG['N_ESTIMATORS'],
-                    n_jobs=CONFIG['N_JOBS'],
-                    max_features=CONFIG['MAX_FEATURES'],
-                    max_samples=CONFIG['MAX_SAMPLES'],
-                    cv_folds=CONFIG['CV_FOLDS']
-                ),
-                'params': {
-                    'n_estimators': CONFIG['N_ESTIMATORS'],
-                    'max_features': CONFIG['MAX_FEATURES'],
-                    'max_samples': CONFIG['MAX_SAMPLES']
+        # Prepare and save RF results
+        rf_pce_results = prepare_pce_results(rf_results)
+        rf_results_path = os.path.join(
+            execution_logger.results_dir,
+            f"PCE_results_RF_{DFT_METHOD}_eth.xlsx"
+        )
+        rf_pce_results.to_excel(rf_results_path, index=False)
+        logger.info(f"RF results file saved to: {rf_results_path}")
+
+        # Generate visualizations for RF
+        logger.info("Generating visualizations for RF...")
+        try:
+            rf_importance = rf_model.get_feature_importance()
+            generate_visualizations(rf_model, "RF", execution_logger.results_dir)
+        except Exception as e:
+            logger.error(f"Error generating visualizations for RF: {e}")
+
+        # Save RF model
+        rf_model_path = os.path.join(
+            execution_logger.models_dir,
+            f"pce_prediction_model_RF_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+        )
+        rf_model.save_model(rf_model_path)
+        logger.info(f"RF model saved to: {rf_model_path}")
+
+        # Train and evaluate XGBoost model
+        logger.info("\nTraining XGBoost model and generating predictions...")
+        xgb_model = XGBoostPCEModel(
+            test_size=CONFIG['TEST_SIZE'],
+            random_state=CONFIG['RANDOM_STATE'],
+            cv_folds=CONFIG['CV_FOLDS'],
+            n_estimators=1000,
+            learning_rate=0.03,
+            max_depth=3,
+            min_child_weight=1,
+            subsample=0.7,
+            colsample_bytree=0.7,
+            gamma=0,
+            reg_alpha=0,
+            reg_lambda=0.1,
+            scale_pos_weight=1.0
+        )
+        xgb_model._create_model()
+        xgb_metrics, xgb_results = xgb_model.train(data)
+
+        # Prepare and save XGBoost results
+        xgb_pce_results = prepare_pce_results(xgb_results)
+        xgb_results_path = os.path.join(
+            execution_logger.results_dir,
+            f"PCE_results_XGBoost_{DFT_METHOD}_eth.xlsx"
+        )
+        xgb_pce_results.to_excel(xgb_results_path, index=False)
+        logger.info(f"XGBoost results file saved to: {xgb_results_path}")
+
+        # Generate visualizations for XGBoost
+        logger.info("Generating visualizations for XGBoost...")
+        try:
+            xgb_importance = xgb_model.get_feature_importance()
+            generate_visualizations(xgb_model, "XGBoost", execution_logger.results_dir)
+        except Exception as e:
+            logger.error(f"Error generating visualizations for XGBoost: {e}")
+
+        # Save XGBoost model
+        xgb_model_path = os.path.join(
+            execution_logger.models_dir,
+            f"pce_prediction_model_XGBoost_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+        )
+        xgb_model.save_model(xgb_model_path)
+        logger.info(f"XGBoost model saved to: {xgb_model_path}")
+
+        # Train and evaluate Ensemble model
+        logger.info("\nTraining Ensemble model and generating predictions...")
+        ensemble_model = EnsemblePCEModel(
+            test_size=CONFIG['TEST_SIZE'],
+            random_state=CONFIG['RANDOM_STATE'],
+            cv_folds=CONFIG['CV_FOLDS'],
+            rf_params=CONFIG['RF_PARAMS'],
+            xgb_params=CONFIG['XGBOOST_PARAMS']
+        )
+        ensemble_model._create_model()
+        ensemble_metrics, ensemble_results = ensemble_model.train(data)
+
+        # Prepare and save Ensemble results
+        ensemble_pce_results = prepare_pce_results(ensemble_results)
+        ensemble_results_path = os.path.join(
+            execution_logger.results_dir,
+            f"PCE_results_Ensemble_{DFT_METHOD}_eth.xlsx"
+        )
+        ensemble_pce_results.to_excel(ensemble_results_path, index=False)
+        logger.info(f"Ensemble results file saved to: {ensemble_results_path}")
+
+        # Generate visualizations for Ensemble
+        logger.info("Generating visualizations for Ensemble...")
+        try:
+            ensemble_importance = ensemble_model.get_feature_importance()
+            generate_visualizations(ensemble_model, "Ensemble", execution_logger.results_dir)
+        except Exception as e:
+            logger.error(f"Error generating visualizations for Ensemble: {e}")
+
+        # Save Ensemble model
+        ensemble_model_path = os.path.join(
+            execution_logger.models_dir,
+            f"pce_prediction_model_Ensemble_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+        )
+        ensemble_model.save_model(ensemble_model_path)
+        logger.info(f"Ensemble model saved to: {ensemble_model_path}")
+
+        # Save execution info
+        execution_info_path = execution_logger.save_execution_info(
+            config={
+                'rf': CONFIG['RF_PARAMS'],
+                'xgboost': CONFIG['XGBOOST_PARAMS'],
+                'ensemble': {
+                    'rf_params': CONFIG['RF_PARAMS'],
+                    'xgb_params': CONFIG['XGBOOST_PARAMS']
                 }
             },
-            'XGBoost': {
-                'model': XGBoostPCEModel(
-                    test_size=CONFIG['TEST_SIZE'],
-                    random_state=CONFIG['RANDOM_STATE'],
-                    n_estimators=CONFIG['N_ESTIMATORS'],
-                    learning_rate=CONFIG['LEARNING_RATE'],
-                    max_depth=CONFIG['max_depth'],
-                    cv_folds=CONFIG['CV_FOLDS']
-                ),
-                'params': {
-                    'n_estimators': CONFIG['N_ESTIMATORS'],
-                    'learning_rate': CONFIG['LEARNING_RATE'],
-                    'max_depth': CONFIG['max_depth']
-                }
+            metrics={
+                'rf': rf_metrics,
+                'xgboost': xgb_metrics,
+                'ensemble': ensemble_metrics
+            },
+            results={
+                'rf': rf_pce_results,
+                'xgboost': xgb_pce_results,
+                'ensemble': ensemble_pce_results
             }
-        }
-
-        all_metrics = {}
-        all_results = {}
-        execution_times = {}
-
-        # Train and evaluate each model
-        for model_name, model_info in models.items():
-            logger.info(f"\nTraining {model_name} model and generating predictions...")
-            model_start_time = datetime.now()
-
-            model = model_info['model']
-            model_params = model_info['params']
-            metrics, results = model.train(data)
-
-            model_end_time = datetime.now()
-            execution_time = str(model_end_time - model_start_time)
-            execution_times[model_name] = execution_time
-
-            all_metrics[model_name] = metrics
-            all_results[model_name] = results
-
-            # Generate visualizations with model parameters
-            logger.info(f"Generating visualizations for {model_name}...")
-            try:
-                visualizer.plot_actual_vs_predicted(results, model_name, model_params)
-                visualizer.plot_error_distribution(results, model_name, model_params)
-                visualizer.plot_parity(results, model_name, model_params)
-                feature_importance = model.get_feature_importance()
-                visualizer.plot_feature_importance(feature_importance, model_name, model_params)
-                visualizer.plot_feature_correlation(data, model_name)
-                visualizer.plot_residuals(results, model_name, model_params)
-
-            except Exception as e:
-                logger.error(f"Error generating visualizations for {model_name}: {e}")
-
-            # Save model and results
-            model_data = {
-                'model': model.model,
-                'feature_columns': model.feature_columns,
-                'scaler': model.scaler
-            }
-            model_filename = f"pce_prediction_model_{model_name}_{DFT_METHOD}_eth"
-            model_path = execution_logger.save_model(model_data, model_filename)
-            logger.info(f"{model_name} model saved to: {model_path}")
-
-            results_filename = f"PCE_results_{model_name}_{DFT_METHOD}_eth.xlsx"
-            results.to_excel(results_filename, index=False)
-            results_log_path = execution_logger.save_results_file(results_filename)
-            logger.info(f"{model_name} results file saved to: {results_log_path}")
-
-        # Add execution times to metrics
-        total_execution_time = str(datetime.now() - start_time)
-        for model_name in all_metrics:
-            all_metrics[model_name]['execution_time'] = execution_times[model_name]
-
-        # Save comprehensive execution info
-        comprehensive_info = {
-            'config': CONFIG,
-            'metrics': all_metrics,
-            'total_execution_time': total_execution_time
-        }
-
-        info_path = execution_logger.save_execution_info(
-            comprehensive_info,
-            all_metrics,
-            all_results
         )
-        logger.info(f"Comprehensive execution info saved to: {info_path}")
+        logger.info(f"Comprehensive execution info saved to: {execution_info_path}")
 
-        # Create and save comparison summary
-        comparison_df = pd.DataFrame({
-            'Model': [],
-            'Test_R2': [],
-            'Test_RMSE': [],
-            'Test_MAE': [],
-            'CV_R2_Mean': [],
-            'CV_R2_Std': [],
-            'Execution_Time': []
+        # Create model comparison DataFrame
+        model_comparison = pd.DataFrame({
+            'Model': ['RF', 'XGBoost', 'Ensemble'],
+            'Test_R2': [
+                rf_metrics['test']['r2'],
+                xgb_metrics['test']['r2'],
+                ensemble_metrics['test']['r2']
+            ],
+            'Test_RMSE': [
+                rf_metrics['test']['rmse'],
+                xgb_metrics['test']['rmse'],
+                ensemble_metrics['test']['rmse']
+            ],
+            'Test_MAE': [
+                rf_metrics['test']['mae'],
+                xgb_metrics['test']['mae'],
+                ensemble_metrics['test']['mae']
+            ],
+            'CV_R2_Mean': [
+                rf_metrics.get('cv', {}).get('r2_mean', 'N/A'),
+                xgb_metrics.get('cv', {}).get('r2_mean', 'N/A'),
+                ensemble_metrics.get('cv', {}).get('r2_mean', 'N/A')
+            ],
+            'CV_R2_Std': [
+                rf_metrics.get('cv', {}).get('r2_std', 'N/A'),
+                xgb_metrics.get('cv', {}).get('r2_std', 'N/A'),
+                ensemble_metrics.get('cv', {}).get('r2_std', 'N/A')
+            ],
+            'Execution_Time': [
+                rf_metrics.get('execution_time', 'N/A'),
+                xgb_metrics.get('execution_time', 'N/A'),
+                ensemble_metrics.get('execution_time', 'N/A')
+            ]
         })
 
-        for model_name, metrics in all_metrics.items():
-            comparison_df = pd.concat([comparison_df, pd.DataFrame({
-                'Model': [model_name],
-                'Test_R2': [metrics['test']['r2']],
-                'Test_RMSE': [metrics['test']['rmse']],
-                'Test_MAE': [metrics['test']['mae']],
-                'CV_R2_Mean': [metrics['cv']['r2_mean']],
-                'CV_R2_Std': [metrics['cv']['r2_std']],
-                'Execution_Time': [metrics['execution_time']]
-            })], ignore_index=True)
+        # Save model comparison
+        comparison_path = os.path.join(
+            execution_logger.results_dir,
+            f"model_comparison_{DFT_METHOD}_eth.xlsx"
+        )
+        model_comparison.to_excel(comparison_path, index=False)
+        logger.info(f"\nModel comparison saved to: {comparison_path}")
 
-        comparison_filename = f"model_comparison_{DFT_METHOD}_eth.xlsx"
-        comparison_df.to_excel(comparison_filename, index=False)
-        comparison_log_path = execution_logger.save_results_file(comparison_filename)
-        logger.info(f"\nModel comparison saved to: {comparison_log_path}")
-
-        logger.info(f"\nPipeline completed. Total execution time: {total_execution_time}")
-
-        return True
+        # Log completion
+        end_time = datetime.now()
+        execution_time = end_time - start_time
+        logger.info(f"\nPipeline completed. Total execution time: {execution_time}")
 
     except Exception as e:
-        logger.error(f"Error in main execution: {e}")
-        return False
+        logger.error(f"Error in main execution: {e}", exc_info=True)
+        raise
 
 
 if __name__ == "__main__":

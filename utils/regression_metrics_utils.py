@@ -2,8 +2,9 @@ from dataclasses import dataclass
 from typing import Dict, Tuple, List
 import numpy as np
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import cross_val_score, KFold
-
+from sklearn.model_selection import RepeatedKFold, KFold
+import warnings
+warnings.filterwarnings('ignore', category=UserWarning)
 
 @dataclass
 class RegressionMetrics:
@@ -17,18 +18,24 @@ class RegressionMetrics:
 
 
 class ModelEvaluator:
-    """Handles model evaluation and metrics calculation."""
+    """Handles model evaluation and metrics calculation with repeated cross-validation."""
 
-    def __init__(self, n_splits: int = 5, random_state: int = 42):
+    def __init__(self, n_splits: int = 5, n_repeats: int = 3, random_state: int = 42):
         """
-        Initialize the model evaluator.
+        Initialize the model evaluator with repeated cross-validation.
 
         Args:
             n_splits: Number of folds for cross-validation
+            n_repeats: Number of times to repeat the CV
             random_state: Random seed for reproducibility
         """
         self.n_splits = n_splits
-        self.cv = KFold(n_splits=n_splits, shuffle=True, random_state=random_state)
+        self.n_repeats = n_repeats
+        self.cv = RepeatedKFold(
+            n_splits=n_splits,
+            n_repeats=n_repeats,
+            random_state=random_state
+        )
 
     def calculate_metrics(self, y_true: np.ndarray, y_pred: np.ndarray, n_features: int) -> RegressionMetrics:
         """
@@ -49,7 +56,7 @@ class ModelEvaluator:
         rmse = np.sqrt(mean_squared_error(y_true, y_pred))
         mae = mean_absolute_error(y_true, y_pred)
 
-        # Calculate adjusted R²
+        # Calculate adjusted R² with penalty for number of features
         adjusted_r2 = 1 - (1 - r2) * (n_samples - 1) / (n_samples - n_features - 1)
 
         # Calculate residuals statistics
@@ -68,7 +75,7 @@ class ModelEvaluator:
 
     def cross_validate(self, model, X: np.ndarray, y: np.ndarray) -> Dict[str, List[float]]:
         """
-        Perform cross-validation with multiple metrics.
+        Perform repeated cross-validation with multiple metrics.
 
         Args:
             model: Trained model
@@ -78,13 +85,47 @@ class ModelEvaluator:
         Returns:
             Dictionary containing cross-validation scores for each metric
         """
-        cv_results = {
-            'r2': cross_val_score(model, X, y, cv=self.cv, scoring='r2'),
-            'neg_rmse': -np.sqrt(-cross_val_score(model, X, y, cv=self.cv, scoring='neg_mean_squared_error')),
-            'neg_mae': -cross_val_score(model, X, y, cv=self.cv, scoring='neg_mean_absolute_error')
-        }
+        from sklearn.ensemble import VotingRegressor
 
-        return cv_results
+        # Convert inputs to numpy arrays if they're not already
+        X_array = X if isinstance(X, np.ndarray) else X.values
+        y_array = y if isinstance(y, np.ndarray) else y.values
+
+        # Initialize lists to store scores for each fold and repeat
+        r2_scores = []
+        rmse_scores = []
+        mae_scores = []
+
+        # Perform repeated cross-validation
+        for train_idx, val_idx in self.cv.split(X_array):
+            X_train, X_val = X_array[train_idx], X_array[val_idx]
+            y_train, y_val = y_array[train_idx], y_array[val_idx]
+
+            # Train model on this fold
+            if isinstance(model, VotingRegressor):
+                model_clone = VotingRegressor(
+                    estimators=[(name, est.__class__(**est.get_params())) 
+                              for name, est in model.estimators],
+                    weights=model.weights
+                )
+            else:
+                model_clone = model.__class__(**model.get_params())
+            model_clone.fit(X_train, y_train)
+
+            # Make predictions
+            y_pred = model_clone.predict(X_val)
+
+            # Calculate metrics for this fold
+            r2_scores.append(r2_score(y_val, y_pred))
+            rmse_scores.append(np.sqrt(mean_squared_error(y_val, y_pred)))
+            mae_scores.append(mean_absolute_error(y_val, y_pred))
+
+        # Return all metrics
+        return {
+            'r2': r2_scores,
+            'neg_rmse': [-x for x in rmse_scores],  # Negate for consistency with sklearn
+            'neg_mae': [-x for x in mae_scores]  # Negate for consistency with sklearn
+        }
 
     def evaluate_split_performance(
             self,

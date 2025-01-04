@@ -28,15 +28,20 @@ class ExecutionLogger:
         # Create base log directory if it doesn't exist
         self.base_log_dir.mkdir(exist_ok=True)
 
-        # Create execution-specific directory
-        execution_dirname = f"ex_{self.timestamp.strftime('%d.%m.%y_%H-%M')}_{dft}"
-        self.execution_dir = self.base_log_dir / execution_dirname
-        self.execution_dir.mkdir(exist_ok=True)
+        # Create execution directory with timestamp
+        timestamp_str = self.timestamp.strftime("%d.%m.%y_%H-%M")
+        self.execution_dir = self.base_log_dir / f"ex_{timestamp_str}_{dft}"
 
         # Create subdirectories
-        (self.execution_dir / "plots").mkdir(exist_ok=True)
-        (self.execution_dir / "models").mkdir(exist_ok=True)
-        (self.execution_dir / "results").mkdir(exist_ok=True)
+        self.models_dir = self.execution_dir / "models"
+        self.results_dir = self.execution_dir / "results"
+        self.plots_dir = self.execution_dir / "plots"
+
+        # Create all directories
+        self.execution_dir.mkdir(parents=True, exist_ok=True)
+        self.models_dir.mkdir(exist_ok=True)
+        self.results_dir.mkdir(exist_ok=True)
+        self.plots_dir.mkdir(exist_ok=True)
 
     def _get_millisecond_timestamp(self) -> str:
         """Generate millisecond timestamp for file names."""
@@ -45,7 +50,7 @@ class ExecutionLogger:
     def save_model(self, model, prefix: str = "model") -> Path:
         """Save model with timestamp."""
         timestamp = self._get_millisecond_timestamp()
-        model_path = self.execution_dir / "models" / f"{prefix}-{timestamp}.joblib"
+        model_path = self.models_dir / f"{prefix}-{timestamp}.joblib"
         joblib.dump(model, model_path)
         return model_path
 
@@ -61,7 +66,7 @@ class ExecutionLogger:
             Path where the plot was saved
         """
         timestamp = self._get_millisecond_timestamp()
-        plot_path = self.execution_dir / "plots" / f"{name}_{timestamp}.png"
+        plot_path = self.plots_dir / f"{name}_{timestamp}.png"
         fig.savefig(plot_path, dpi=300, bbox_inches='tight')
         return plot_path
 
@@ -72,7 +77,7 @@ class ExecutionLogger:
             if not results_path.exists():
                 raise FileNotFoundError(f"Results file '{results_file}' not found.")
 
-            new_results_path = self.execution_dir / "results" / results_path.name
+            new_results_path = self.results_dir / results_path.name
             results_path.rename(new_results_path)
 
             return new_results_path
@@ -105,3 +110,18 @@ class ExecutionLogger:
                 f.write("\n")
 
         return info_path
+
+    def save_descriptors(self, data: pd.DataFrame, dft_method: str) -> Path:
+        """
+        Save all descriptors (DFT, calculated, Mordred) to a single Excel file.
+        
+        Args:
+            data: DataFrame containing all descriptors
+            dft_method: DFT method used for calculations
+            
+        Returns:
+            Path where the descriptors file was saved
+        """
+        descriptors_path = self.execution_dir / f"All_descriptors_{dft_method}_eth.xlsx"
+        data.to_excel(descriptors_path, index=False)
+        return descriptors_path
