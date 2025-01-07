@@ -60,20 +60,20 @@ CONFIG = {
     
     # Random Forest Parameters
     'RF_PARAMS': {
-        'n_estimators': 500,
-        'max_depth': 6,
+        'n_estimators': 10000,
+        'max_depth': 10,
         'min_samples_split': 3,
         'min_samples_leaf': 2,
         'max_features': 'sqrt',
-        'max_samples': 0.8,
+        'max_samples': 0.85,
         'n_jobs': -1
     },
     
     # XGBoost Parameters
     'XGB_PARAMS': {
-        'n_estimators': 1000,
-        'learning_rate': 0.03,
-        'max_depth': 3,
+        'n_estimators': 10000,
+        'learning_rate': 0.08,
+        'max_depth': 10,
         'min_child_weight': 1,
         'subsample': 0.7,
         'colsample_bytree': 0.7,
@@ -86,15 +86,15 @@ CONFIG = {
     # Preprocessing Parameters
     'PREPROCESSING': {
         'force_include_features': ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment'],
-        'n_features_to_select': 15,
-        'correlation_threshold': 0.95,
-        'rf_importance_weight': 0.7,
-        'mi_importance_weight': 0.3
+        'n_features_to_select': 20,
+        'correlation_threshold': 0.90,
+        'rf_importance_weight': 0.6,
+        'mi_importance_weight': 0.4
     },
     
     # Ensemble Parameters
     'ENSEMBLE': {
-        'weights': [0.6, 0.4]  # RF weight, XGBoost weight
+        'weights': [0.05, 0.95]  # RF weight, XGBoost weight
     }
 }
 

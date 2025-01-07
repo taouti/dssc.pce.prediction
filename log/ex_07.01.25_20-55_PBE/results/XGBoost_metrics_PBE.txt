@@ -1,0 +1,12 @@
+XGBoost Model Metrics
+=====================
+
+Training Metrics:
+  r2: 0.8412
+  rmse: 0.0070
+  mae: 0.0026
+
+Test Metrics:
+  r2: 0.8499
+  rmse: 0.0061
+  mae: 0.0060

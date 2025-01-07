@@ -1,0 +1,20 @@
+Ensemble Model Metrics
+=====================
+
+Training Metrics:
+  r2: 0.6044
+  rmse: 0.0110
+  mae: 0.0092
+
+Test Metrics:
+  r2: 0.4136
+  rmse: 0.0121
+  mae: 0.0091
+
+Cross-Validation Metrics:
+  r2_mean: -0.1040
+  r2_std: 0.6033
+  rmse_mean: 0.0150
+  rmse_std: 0.0022
+  mae_mean: 0.0127
+  mae_std: 0.0017
