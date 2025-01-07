@@ -14,7 +14,7 @@ DFT_METHOD = 'PBE'
 CONFIG = {
     'DFT_OUTPUT_DIR': f'./outputs_{DFT_METHOD}_ethanol',
     'MOL_DIR': f'./mol_{DFT_METHOD}_ethanol',
-    'MODEL_PATH': f'pce_prediction_model_XGBoost_{DFT_METHOD}_eth.joblib',
+    'MODEL_PATH': f'pce_prediction_model_RF_{DFT_METHOD}_eth.joblib',
     'OUTPUT_FILE': f'PCE_predictions_{DFT_METHOD}_eth.xlsx',
 }
 

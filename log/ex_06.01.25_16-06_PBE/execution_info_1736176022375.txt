@@ -1,0 +1,119 @@
+=== Execution Information ===
+Timestamp: 2025.01.06_16-06-40
+
+=== Dataset Information ===
+
+rf Model:
+Total samples: 40
+Training samples: 34
+Testing samples: 6
+
+xgboost Model:
+Total samples: 40
+Training samples: 34
+Testing samples: 6
+
+ensemble Model:
+Total samples: 40
+Training samples: 34
+Testing samples: 6
+
+=== Configuration ===
+{
+  "rf": {
+    "n_estimators": 500,
+    "max_depth": 6,
+    "min_samples_split": 3,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "max_samples": 0.8,
+    "n_jobs": -1
+  },
+  "xgboost": {
+    "n_estimators": 1000,
+    "learning_rate": 0.03,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "subsample": 0.7,
+    "colsample_bytree": 0.7,
+    "gamma": 0,
+    "reg_alpha": 0,
+    "reg_lambda": 0.1,
+    "scale_pos_weight": 1.0
+  },
+  "ensemble": {
+    "rf_params": {
+      "n_estimators": 500,
+      "max_depth": 6,
+      "min_samples_split": 3,
+      "min_samples_leaf": 2,
+      "max_features": "sqrt",
+      "max_samples": 0.8,
+      "n_jobs": -1
+    },
+    "xgb_params": {
+      "n_estimators": 1000,
+      "learning_rate": 0.03,
+      "max_depth": 3,
+      "min_child_weight": 1,
+      "subsample": 0.7,
+      "colsample_bytree": 0.7,
+      "gamma": 0,
+      "reg_alpha": 0,
+      "reg_lambda": 0.1,
+      "scale_pos_weight": 1.0
+    }
+  }
+}
+
+=== Performance Metrics ===
+
+rf Model:
+{
+  "train": {
+    "r2": 0.8014828292892363,
+    "rmse": 0.00768774876610519,
+    "mae": 0.005889682570028007
+  },
+  "test": {
+    "r2": 0.2138128654444783,
+    "rmse": 0.016865086695472382,
+    "mae": 0.013540151322751317
+  }
+}
+
+xgboost Model:
+{
+  "train": {
+    "r2": 0.9152380174286383,
+    "rmse": 0.005023433956093984,
+    "mae": 0.002835286272645874
+  },
+  "test": {
+    "r2": -0.2110794557986797,
+    "rmse": 0.020932058038760668,
+    "mae": 0.017085863246520356
+  }
+}
+
+ensemble Model:
+{
+  "train": {
+    "r2": 0.9321272376207734,
+    "rmse": 0.004727435197299676,
+    "mae": 0.003914786292984501
+  },
+  "test": {
+    "r2": 0.8978347732007024,
+    "rmse": 0.0044007479237310534,
+    "mae": 0.003599208410309522
+  },
+  "cv": {
+    "r2_mean": 0.3581257607095131,
+    "r2_std": 0.23516617891971614,
+    "rmse_mean": 0.01340299182051217,
+    "rmse_std": 0.003110904376661809,
+    "mae_mean": 0.011551465524943311,
+    "mae_std": 0.0031023682578909706
+  }
+}

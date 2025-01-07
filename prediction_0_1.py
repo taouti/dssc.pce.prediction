@@ -14,6 +14,7 @@ from sklearn.ensemble import VotingRegressor
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 import pickle
 from pathlib import Path
+import matplotlib.pyplot as plt
 
 from utils.logging_utils import ExecutionLogger
 from utils.visualization_utils import PCEVisualizer
@@ -51,15 +52,17 @@ CONFIG = {
     'DFT_DATASET': f'dyes_DFT_{DFT_METHOD}_eth_dataset.xlsx',
     'COMPREHENSIVE_RESULTS': f'PCE_results_{DFT_METHOD}_eth.xlsx',
     'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
+    
     # Model Parameters
-    'TEST_SIZE': 0.15,  # 0.1 got 4 samples, 0.2 got 8 and 0.15 got 6
+    'TEST_SIZE': 0.1,
     'RANDOM_STATE': 42,
+    'CV_FOLDS': 5,
     
     # Random Forest Parameters
     'RF_PARAMS': {
-        'n_estimators': 500,  # Increased from 200
-        'max_depth': 6,      # Slightly increased
-        'min_samples_split': 3,  # Reduced
+        'n_estimators': 500,
+        'max_depth': 6,
+        'min_samples_split': 3,
         'min_samples_leaf': 2,
         'max_features': 'sqrt',
         'max_samples': 0.8,
@@ -67,38 +70,32 @@ CONFIG = {
     },
     
     # XGBoost Parameters
-    'XGBOOST_PARAMS': {
-        'n_estimators': 1000,           # Increased from 150
-        'learning_rate': 0.03,         # Increased from 0.01
-        'max_depth': 3,                # Reduced from 6
-        'min_child_weight': 1,         # Reduced from 3
+    'XGB_PARAMS': {
+        'n_estimators': 1000,
+        'learning_rate': 0.03,
+        'max_depth': 3,
+        'min_child_weight': 1,
         'subsample': 0.7,
         'colsample_bytree': 0.7,
-        'gamma': 0,                 # Reduced from 0.1
-        'reg_alpha': 0,              # Removed L1 regularization
-        'reg_lambda': 0.1,             # Reduced L2 regularization
+        'gamma': 0,
+        'reg_alpha': 0,
+        'reg_lambda': 0.1,
         'scale_pos_weight': 1.0,
     },
     
-    # Cross-validation Parameters
-    'CV_FOLDS': 5,
-    'CV_REPEATS': 3,
-    
-    # Feature Selection
-    'FEATURE_SELECTION': {
-        'n_features_to_select': 15,    # Increased from 10
-        'importance_threshold': 0.02,   # Decreased from 0.05
-        'correlation_threshold': 0.95,  # Keep at 0.95
-        'force_include': ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment']  # Force include these features
+    # Preprocessing Parameters
+    'PREPROCESSING': {
+        'force_include_features': ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment'],
+        'n_features_to_select': 15,
+        'correlation_threshold': 0.95,
+        'rf_importance_weight': 0.7,
+        'mi_importance_weight': 0.3
     },
     
     # Ensemble Parameters
     'ENSEMBLE': {
         'weights': [0.6, 0.4]  # RF weight, XGBoost weight
-    },
-    
-    # Feature Scaling
-    'FEATURE_SCALING': True
+    }
 }
 
 
@@ -303,150 +300,6 @@ def calculate_descriptors(data, constants):
         raise
 
 
-def select_features(X, y, feature_names):
-    """
-    Select the most important features using multiple methods.
-    
-    Args:
-        X (np.array or pd.DataFrame): Feature matrix
-        y (np.array or pd.Series): Target values
-        feature_names (list): List of feature names
-    
-    Returns:
-        list: Selected feature names
-    """
-    try:
-        # First, ensure forced features are included
-        forced_features = [f for f in CONFIG['FEATURE_SELECTION']['force_include'] 
-                         if f in feature_names]
-        remaining_features = [f for f in feature_names 
-                            if f not in forced_features]
-        
-        # Initialize Random Forest for feature selection on remaining features
-        X_remaining = X[remaining_features]
-        
-        rf_params = {
-            'n_estimators': CONFIG['RF_PARAMS']['n_estimators'],
-            'max_depth': CONFIG['RF_PARAMS']['max_depth'],
-            'min_samples_split': CONFIG['RF_PARAMS']['min_samples_split'],
-            'min_samples_leaf': CONFIG['RF_PARAMS']['min_samples_leaf'],
-            'max_features': CONFIG['RF_PARAMS']['max_features'],
-            'n_jobs': CONFIG['RF_PARAMS']['n_jobs'],
-            'random_state': CONFIG['RANDOM_STATE']
-        }
-        
-        rf_model = RfPCEModel(**rf_params)
-        rf_model._create_model()
-        rf_model.model.fit(X_remaining, y)
-        
-        # Get feature importance from Random Forest
-        rf_importance = pd.DataFrame({
-            'feature': remaining_features,
-            'importance': rf_model.model.feature_importances_
-        }).sort_values('importance', ascending=False)
-        
-        # Calculate mutual information scores
-        mi_scores = mutual_info_regression(X_remaining, y)
-        mi_importance = pd.DataFrame({
-            'feature': remaining_features,
-            'importance': mi_scores
-        }).sort_values('importance', ascending=False)
-        
-        # Combine both methods
-        combined_importance = pd.DataFrame({
-            'feature': remaining_features,
-            'rf_importance': rf_importance.set_index('feature').loc[remaining_features, 'importance'],
-            'mi_importance': mi_importance.set_index('feature').loc[remaining_features, 'importance']
-        })
-        
-        # Normalize scores
-        combined_importance['rf_importance'] = combined_importance['rf_importance'] / combined_importance['rf_importance'].max()
-        combined_importance['mi_importance'] = combined_importance['mi_importance'] / combined_importance['mi_importance'].max()
-        
-        # Calculate combined score
-        combined_importance['combined_score'] = (
-            combined_importance['rf_importance'] * 0.7 +  # Give more weight to RF
-            combined_importance['mi_importance'] * 0.3    # Less weight to MI
-        )
-        
-        # Sort by combined score
-        combined_importance = combined_importance.sort_values('combined_score', ascending=False)
-        
-        # Select top features based on configuration (excluding forced features)
-        n_additional_features = min(
-            CONFIG['FEATURE_SELECTION']['n_features_to_select'] - len(forced_features),
-            len(remaining_features)
-        )
-        selected_features = forced_features + combined_importance.head(n_additional_features).index.tolist()
-        
-        # Remove highly correlated features (but never remove forced features)
-        if len(selected_features) > 1:
-            X_selected = X[selected_features]
-            corr_matrix = pd.DataFrame(X_selected).corr().abs()
-            
-            # Create a mask for highly correlated pairs
-            upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(bool))
-            
-            # Find features to drop (never drop forced features)
-            to_drop = []
-            for i in range(len(upper.columns)):
-                for j in range(i + 1, len(upper.columns)):
-                    if upper.iloc[i, j] > CONFIG['FEATURE_SELECTION']['correlation_threshold']:
-                        feat_i = upper.columns[i]
-                        feat_j = upper.columns[j]
-                        
-                        # Skip if both features are forced
-                        if feat_i in forced_features and feat_j in forced_features:
-                            continue
-                        
-                        # Never drop a forced feature
-                        if feat_i in forced_features:
-                            to_drop.append(feat_j)
-                        elif feat_j in forced_features:
-                            to_drop.append(feat_i)
-                        # For non-forced features, drop the one with lower importance
-                        else:
-                            if combined_importance.loc[feat_i, 'combined_score'] < combined_importance.loc[feat_j, 'combined_score']:
-                                to_drop.append(feat_i)
-                            else:
-                                to_drop.append(feat_j)
-            
-            # Remove duplicates from to_drop list
-            to_drop = list(set(to_drop))
-            
-            # Update selected features
-            selected_features = [f for f in selected_features if f not in to_drop]
-        
-        logger.info(f"Selected {len(selected_features)} features: {', '.join(selected_features)}")
-        return selected_features
-        
-    except Exception as e:
-        logger.error(f"Error in feature selection: {e}")
-        raise
-
-
-def prepare_stratified_splits(X, y):
-    """
-    Prepare stratified splits for cross-validation.
-    
-    Args:
-        X (np.array): Feature matrix
-        y (np.array): Target values
-    
-    Returns:
-        tuple: X, y, and stratification labels
-    """
-    # Ensure y is a numpy array and reshape it
-    y_np = np.array(y).reshape(-1, 1)
-    
-    # Create bins for stratification
-    n_bins = min(5, len(y) // 5)  # Ensure we don't have too many bins for small datasets
-    kbd = KBinsDiscretizer(n_bins=n_bins, encode='ordinal', strategy='quantile')
-    stratification_labels = kbd.fit_transform(y_np).ravel()
-    
-    return X, y, stratification_labels
-
-
 def prepare_dataset():
     """Prepare and merge all datasets."""
     try:
@@ -514,20 +367,15 @@ def prepare_dataset():
                 else:
                     data[col] = data[col].fillna(data[col].mean())
 
-        # Save complete dataset with all descriptors before feature selection and scaling
-        complete_data = data.copy()
+        # Save complete dataset before feature selection and scaling
+        descriptors_path = os.path.join(
+            os.path.dirname(CONFIG['DFT_DATASET']),
+            f"All_descriptors_{DFT_METHOD}_eth_training.xlsx"
+        )
+        data.to_excel(descriptors_path, index=False)
+        logger.info(f"Saved complete training dataset to: {descriptors_path}")
 
-        # Select features
-        feature_columns = [col for col in data.columns if col not in ['File', 'PCE', 'SMILES']]
-        selected_features = select_features(data[feature_columns], data['PCE'], feature_columns)
-        data = data[['File', 'PCE', 'SMILES'] + selected_features].copy()
-
-        # Scale features
-        if CONFIG['FEATURE_SCALING']:
-            scaler = StandardScaler()
-            data[selected_features] = scaler.fit_transform(data[selected_features])
-
-        return data, complete_data
+        return data, data.copy()
 
     except Exception as e:
         logger.error(f"Error preparing dataset: {e}")
@@ -545,12 +393,51 @@ def generate_visualizations(model, model_name: str, output_dir: Path) -> None:
     try:
         visualizer = PCEVisualizer(logging.getLogger())
         # Create plots directory at the same level as results directory
-        visualizer.output_dir = output_dir.parent / "plots"
-        os.makedirs(visualizer.output_dir, exist_ok=True)
+        plots_dir = output_dir.parent / "plots"
+        enhanced_plots_dir = output_dir.parent / "enhanced_plots"
+        os.makedirs(plots_dir, exist_ok=True)
+        os.makedirs(enhanced_plots_dir, exist_ok=True)
+
+        # Generate standard visualizations
+        visualizer.output_dir = plots_dir
         visualizer.visualize_results(model, model_name)
-        logging.info(f"Generating visualizations for {model_name}...")
+        logging.info(f"Generated standard visualizations for {model_name}")
+
+        # Generate enhanced visualizations
+        visualizer.output_dir = enhanced_plots_dir
+        results = model.get_results()
+        
+        try:
+            # Enhanced prediction plots
+            visualizer.plot_predicted_vs_actual_enhanced(results, model_name)
+            visualizer.plot_residuals_enhanced(results, model_name)
+            visualizer.plot_error_distribution_enhanced(results, model_name)
+            
+            # Enhanced feature analysis
+            if hasattr(model, 'get_feature_importance'):
+                importance_df = model.get_feature_importance()
+                visualizer.plot_feature_importance_enhanced(importance_df, model_name)
+                visualizer.plot_correlation_heatmap_enhanced(results, model_name)
+            
+            # Descriptor-PCE relationship plots for key features
+            key_descriptors = ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment']
+            for descriptor in key_descriptors:
+                if descriptor in results.columns:
+                    visualizer.plot_descriptor_pce_relationship(results, descriptor, model_name)
+            
+            # Dye ranking plot
+            visualizer.plot_dye_ranking(results, model_name)
+            
+            logging.info(f"Generated enhanced visualizations for {model_name}")
+        except Exception as e:
+            logging.error(f"Error generating enhanced visualizations for {model_name}: {e}")
+
+        # Clean up any remaining figures
+        plt.close('all')
+
     except Exception as e:
-        logging.error(f"Error generating visualizations for {model_name}: {e}")
+        logging.error(f"Error in visualization generation for {model_name}: {e}")
+        plt.close('all')  # Ensure cleanup even if there's an error
 
 
 def main():
@@ -611,7 +498,7 @@ def main():
         # Save RF model
         rf_model_path = os.path.join(
             execution_logger.models_dir,
-            f"pce_prediction_model_RF_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+            f"pce_prediction_model_RF_{DFT_METHOD}_eth.joblib"
         )
         rf_model.save_model(rf_model_path)
         logger.info(f"RF model saved to: {rf_model_path}")
@@ -656,7 +543,7 @@ def main():
         # Save XGBoost model
         xgb_model_path = os.path.join(
             execution_logger.models_dir,
-            f"pce_prediction_model_XGBoost_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+            f"pce_prediction_model_XGBoost_{DFT_METHOD}_eth.joblib"
         )
         xgb_model.save_model(xgb_model_path)
         logger.info(f"XGBoost model saved to: {xgb_model_path}")
@@ -668,16 +555,15 @@ def main():
             random_state=CONFIG['RANDOM_STATE'],
             cv_folds=CONFIG['CV_FOLDS'],
             rf_params=CONFIG['RF_PARAMS'],
-            xgb_params=CONFIG['XGBOOST_PARAMS']
+            xgb_params=CONFIG['XGB_PARAMS']  # Updated to match config key
         )
-        ensemble_model._create_model()
         ensemble_metrics, ensemble_results = ensemble_model.train(data)
 
         # Prepare and save Ensemble results
         ensemble_pce_results = prepare_pce_results(ensemble_results)
         ensemble_results_path = os.path.join(
             execution_logger.results_dir,
-            f"PCE_results_Ensemble_{DFT_METHOD}_eth.xlsx"
+            f"PCE_results_ENSEMBLE_{DFT_METHOD}_eth.xlsx"
         )
         ensemble_pce_results.to_excel(ensemble_results_path, index=False)
         logger.info(f"Ensemble results file saved to: {ensemble_results_path}")
@@ -686,91 +572,41 @@ def main():
         logger.info("Generating visualizations for Ensemble...")
         try:
             ensemble_importance = ensemble_model.get_feature_importance()
-            generate_visualizations(ensemble_model, "Ensemble", execution_logger.results_dir)
+            generate_visualizations(ensemble_model, "ENSEMBLE", execution_logger.results_dir)
         except Exception as e:
             logger.error(f"Error generating visualizations for Ensemble: {e}")
 
         # Save Ensemble model
         ensemble_model_path = os.path.join(
             execution_logger.models_dir,
-            f"pce_prediction_model_Ensemble_{DFT_METHOD}_eth-{int(datetime.now().timestamp() * 1000)}.joblib"
+            f"pce_prediction_model_ENSEMBLE_{DFT_METHOD}_eth.joblib"
         )
         ensemble_model.save_model(ensemble_model_path)
         logger.info(f"Ensemble model saved to: {ensemble_model_path}")
 
-        # Save execution info
-        execution_info_path = execution_logger.save_execution_info(
-            config={
-                'rf': CONFIG['RF_PARAMS'],
-                'xgboost': CONFIG['XGBOOST_PARAMS'],
-                'ensemble': {
-                    'rf_params': CONFIG['RF_PARAMS'],
-                    'xgb_params': CONFIG['XGBOOST_PARAMS']
-                }
-            },
-            metrics={
-                'rf': rf_metrics,
-                'xgboost': xgb_metrics,
-                'ensemble': ensemble_metrics
-            },
-            results={
-                'rf': rf_pce_results,
-                'xgboost': xgb_pce_results,
-                'ensemble': ensemble_pce_results
-            }
+        # Now predict PCE for new dyes using the trained models
+        logger.info("\nPredicting PCE for new dyes...")
+        from utils.pce_predictor import PCEPredictor
+        
+        predictor = PCEPredictor(
+            models_dir=execution_logger.models_dir,
+            new_dyes_dft_dir="New_dyes_outputs_PBE_ethanol",
+            new_dyes_mol_dir="New_dyes_mol_PBE_eth",
+            output_dir=execution_logger.results_dir,
+            dft_method=DFT_METHOD
         )
-        logger.info(f"Comprehensive execution info saved to: {execution_info_path}")
+        
+        predictor.predict()
+        logger.info("PCE predictions for new dyes completed.")
 
-        # Create model comparison DataFrame
-        model_comparison = pd.DataFrame({
-            'Model': ['RF', 'XGBoost', 'Ensemble'],
-            'Test_R2': [
-                rf_metrics['test']['r2'],
-                xgb_metrics['test']['r2'],
-                ensemble_metrics['test']['r2']
-            ],
-            'Test_RMSE': [
-                rf_metrics['test']['rmse'],
-                xgb_metrics['test']['rmse'],
-                ensemble_metrics['test']['rmse']
-            ],
-            'Test_MAE': [
-                rf_metrics['test']['mae'],
-                xgb_metrics['test']['mae'],
-                ensemble_metrics['test']['mae']
-            ],
-            'CV_R2_Mean': [
-                rf_metrics.get('cv', {}).get('r2_mean', 'N/A'),
-                xgb_metrics.get('cv', {}).get('r2_mean', 'N/A'),
-                ensemble_metrics.get('cv', {}).get('r2_mean', 'N/A')
-            ],
-            'CV_R2_Std': [
-                rf_metrics.get('cv', {}).get('r2_std', 'N/A'),
-                xgb_metrics.get('cv', {}).get('r2_std', 'N/A'),
-                ensemble_metrics.get('cv', {}).get('r2_std', 'N/A')
-            ],
-            'Execution_Time': [
-                rf_metrics.get('execution_time', 'N/A'),
-                xgb_metrics.get('execution_time', 'N/A'),
-                ensemble_metrics.get('execution_time', 'N/A')
-            ]
-        })
-
-        # Save model comparison
-        comparison_path = os.path.join(
-            execution_logger.results_dir,
-            f"model_comparison_{DFT_METHOD}_eth.xlsx"
-        )
-        model_comparison.to_excel(comparison_path, index=False)
-        logger.info(f"\nModel comparison saved to: {comparison_path}")
-
-        # Log completion
+        # Log execution time
         end_time = datetime.now()
         execution_time = end_time - start_time
-        logger.info(f"\nPipeline completed. Total execution time: {execution_time}")
+        logger.info(f"\nPCE prediction pipeline completed at {end_time}")
+        logger.info(f"Total execution time: {execution_time}")
 
     except Exception as e:
-        logger.error(f"Error in main execution: {e}", exc_info=True)
+        logger.error(f"Error in main execution: {e}")
         raise
 
 

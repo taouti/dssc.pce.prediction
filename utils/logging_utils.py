@@ -36,12 +36,14 @@ class ExecutionLogger:
         self.models_dir = self.execution_dir / "models"
         self.results_dir = self.execution_dir / "results"
         self.plots_dir = self.execution_dir / "plots"
+        self.enhanced_plots_dir = self.plots_dir / "enhanced"
 
         # Create all directories
         self.execution_dir.mkdir(parents=True, exist_ok=True)
         self.models_dir.mkdir(exist_ok=True)
         self.results_dir.mkdir(exist_ok=True)
         self.plots_dir.mkdir(exist_ok=True)
+        self.enhanced_plots_dir.mkdir(exist_ok=True)
 
     def _get_millisecond_timestamp(self) -> str:
         """Generate millisecond timestamp for file names."""

@@ -17,8 +17,10 @@ import pickle
 from sklearn.base import BaseEstimator, RegressorMixin
 import matplotlib.pyplot as plt
 import seaborn as sns
+import json
 
 from .regression_metrics_utils import ModelEvaluator
+from .preprocessing import FeaturePreprocessor, PreprocessingConfig
 
 logger = logging.getLogger(__name__)
 
@@ -63,50 +65,45 @@ class BasePCEModel(ABC):
         self.random_state = random_state
         self.cv_folds = cv_folds
         self.model = None
-        self.feature_columns = None
+        self.preprocessor = None
         self.results = None
         self.is_trained = False
-        self.scaler = StandardScaler()
         self.evaluator = ModelEvaluator(n_splits=cv_folds, random_state=random_state)
 
     def prepare_data(self, data: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray, pd.Series, List[str]]:
-        # Define columns to exclude from features
-        excluded_columns = ['PCE', 'File', 'SMILES', 'expVoc_V', 'expIsc_mAcm-2', 'expFF', 'Mass']
-        numeric_columns = data.select_dtypes(include=[np.number]).columns.tolist()
-        self.feature_columns = [col for col in numeric_columns if col not in excluded_columns]
+        """Prepare data for training using the preprocessor."""
+        if self.preprocessor is None:
+            # Create preprocessor with default config
+            config = PreprocessingConfig(
+                force_include_features=['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment'],
+                n_features_to_select=15,
+                correlation_threshold=0.95
+            )
+            self.preprocessor = FeaturePreprocessor(config)
 
-        # Extract features and target
-        X = data[self.feature_columns].copy()  
-        y = data['PCE'].copy()
-        file_names = data['File']
-
-        # Print feature names for debugging
-        logger.info(f"Selected features: {', '.join(self.feature_columns)}")
-
-        # Create stratification labels for better split
-        n_bins = min(3, len(y) // 4)  
-        if n_bins >= 2:  
+        # Create stratification labels
+        y = data['PCE']
+        n_bins = min(3, len(y) // 4)
+        if n_bins >= 2:
             kbd = KBinsDiscretizer(n_bins=n_bins, encode='ordinal', strategy='quantile')
             y_np = np.array(y).reshape(-1, 1)
             stratification_labels = kbd.fit_transform(y_np).ravel()
         else:
             stratification_labels = None
 
-        # Handle any missing values
-        X = X.fillna(X.mean())
-
-        # Scale features
-        X_scaled = self.scaler.fit_transform(X)
+        # Process features
+        X = self.preprocessor.fit_transform(data)
+        file_names = data['File']
         
-        return X_scaled, y, file_names, self.feature_columns, stratification_labels
+        return X, y, file_names, X.columns.tolist(), stratification_labels
 
     def train(self, data: pd.DataFrame) -> Tuple[Dict[str, Dict[str, float]], pd.DataFrame]:
         """Train the model and return metrics and predictions."""
-        X_scaled, y, file_names, _, stratification_labels = self.prepare_data(data)
+        X, y, file_names, _, stratification_labels = self.prepare_data(data)
 
         # Split data
         X_train, X_test, y_train, y_test, train_files, test_files = train_test_split(
-            X_scaled, y, file_names,
+            X, y, file_names,
             test_size=self.test_size,
             random_state=self.random_state,
             stratify=stratification_labels
@@ -149,7 +146,7 @@ class BasePCEModel(ABC):
         results.loc[results['File'].isin(test_files), 'Dataset'] = 'Testing'
 
         # Add selected features to results
-        for feature in self.feature_columns:
+        for feature in X.columns:
             results[feature] = data[feature]
 
         self.results = results
@@ -161,15 +158,60 @@ class BasePCEModel(ABC):
         if self.model is None:
             raise ValueError("Model has not been trained yet")
 
-        X = data[self.feature_columns]
-        X_scaled = self.scaler.transform(X)
-        return self.model.predict(X_scaled)
+        X = self.preprocessor.transform(data)
+        return self.model.predict(X)
 
     def get_results(self) -> pd.DataFrame:
         """Get the results from training."""
         if not self.is_trained:
             raise ValueError("Model has not been trained yet")
         return self.results
+
+    def save_model(self, model_path: str):
+        """Save the trained model and preprocessor."""
+        if not self.is_trained:
+            raise ValueError("Model must be trained before saving")
+
+        os.makedirs(os.path.dirname(model_path), exist_ok=True)
+
+        # Save model and preprocessor separately
+        model_data = {
+            'model': self.model,
+            'model_type': self.__class__.__name__,
+            'feature_columns': self.preprocessor.selected_features
+        }
+
+        # Save model
+        with open(model_path, 'wb') as f:
+            pickle.dump(model_data, f)
+
+        # Save preprocessor
+        preprocessor_path = os.path.splitext(model_path)[0] + '_preprocessor.joblib'
+        self.preprocessor.save(preprocessor_path)
+
+        # Save metadata
+        metadata = {
+            'model_type': self.__class__.__name__,
+            'n_features': len(self.preprocessor.selected_features),
+            'feature_list': self.preprocessor.selected_features,
+            'model_path': model_path,
+            'preprocessor_path': preprocessor_path
+        }
+        metadata_path = os.path.splitext(model_path)[0] + '_metadata.json'
+        with open(metadata_path, 'w') as f:
+            json.dump(metadata, f, indent=2)
+
+    def load_model(self, model_path: str):
+        """Load a trained model and its preprocessor."""
+        # Load model
+        with open(model_path, 'rb') as f:
+            model_data = pickle.load(f)
+            self.model = model_data['model']
+
+        # Load preprocessor
+        preprocessor_path = os.path.splitext(model_path)[0] + '_preprocessor.joblib'
+        self.preprocessor = FeaturePreprocessor.load(preprocessor_path)
+        self.is_trained = True
 
     @abstractmethod
     def _create_model(self) -> None:
@@ -178,26 +220,6 @@ class BasePCEModel(ABC):
     @abstractmethod
     def get_feature_importance(self) -> pd.DataFrame:
         pass
-
-    def save_model(self, model_path):
-        """Save the trained model to a file."""
-        os.makedirs(os.path.dirname(model_path), exist_ok=True)
-        model_data = {
-            'model': self.model,
-            'scaler': self.scaler,
-            'feature_columns': self.feature_columns
-        }
-        with open(model_path, 'wb') as f:
-            pickle.dump(model_data, f)
-
-    def load_model(self, model_path):
-        """Load a trained model from a file."""
-        with open(model_path, 'rb') as f:
-            model_data = pickle.load(f)
-            self.model = model_data['model']
-            self.scaler = model_data['scaler']
-            self.feature_columns = model_data['feature_columns']
-
 
 class RfPCEModel(BasePCEModel):
     """Random Forest implementation of PCE prediction model."""
@@ -241,7 +263,7 @@ class RfPCEModel(BasePCEModel):
             raise ValueError("Model has not been trained yet")
 
         importance_df = pd.DataFrame({
-            'Feature': self.feature_columns,
+            'Feature': self.preprocessor.selected_features,
             'Importance': self.model.feature_importances_
         })
         return importance_df.sort_values('Importance', ascending=False)
@@ -285,11 +307,11 @@ class XGBoostPCEModel(BasePCEModel):
 
     def train(self, data: pd.DataFrame) -> Tuple[Dict[str, Dict[str, float]], pd.DataFrame]:
         """Train the model and return metrics and predictions."""
-        X_scaled, y, file_names, _, stratification_labels = self.prepare_data(data)
+        X, y, file_names, _, stratification_labels = self.prepare_data(data)
 
         # Split data into train, validation, and test sets
         X_temp, X_test, y_temp, y_test, temp_files, test_files = train_test_split(
-            X_scaled, y, file_names,
+            X, y, file_names,
             test_size=self.test_size,
             random_state=self.random_state,
             stratify=stratification_labels
@@ -387,7 +409,7 @@ class XGBoostPCEModel(BasePCEModel):
         results.loc[results['File'].isin(test_files), 'Dataset'] = 'Testing'
 
         # Add selected features to results
-        for feature in self.feature_columns:
+        for feature in X.columns:
             results[feature] = data[feature]
 
         self.results = results
@@ -503,7 +525,7 @@ class LightGBMPCEModel(BasePCEModel):
             raise ValueError("Model has not been trained yet")
 
         importance_df = pd.DataFrame({
-            'Feature': self.feature_columns,
+            'Feature': self.preprocessor.selected_features,
             'Importance': self.model.feature_importances_
         })
         return importance_df.sort_values('Importance', ascending=False)
@@ -541,7 +563,7 @@ class SvmPCEModel(BasePCEModel):
             raise ValueError("Feature importance is only available for linear kernel")
 
         importance_df = pd.DataFrame({
-            'Feature': self.feature_columns,
+            'Feature': self.preprocessor.selected_features,
             'Importance': np.abs(self.model.coef_[0])
         })
         return importance_df.sort_values('Importance', ascending=False)
