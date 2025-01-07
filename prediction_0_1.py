@@ -452,6 +452,30 @@ def main():
             base_log_dir="log"
         )
 
+        # Save configuration
+        config_path = os.path.join(execution_logger.execution_dir, "configuration.txt")
+        with open(config_path, 'w') as f:
+            f.write("PCE Prediction Pipeline Configuration\n")
+            f.write("===================================\n\n")
+            f.write(f"DFT Method: {DFT_METHOD}\n")
+            f.write(f"Test Size: {CONFIG['TEST_SIZE']}\n")
+            f.write(f"Random State: {CONFIG['RANDOM_STATE']}\n")
+            f.write(f"CV Folds: {CONFIG['CV_FOLDS']}\n\n")
+            
+            f.write("Random Forest Parameters:\n")
+            for param, value in CONFIG['RF_PARAMS'].items():
+                f.write(f"  {param}: {value}\n")
+            
+            f.write("\nXGBoost Parameters:\n")
+            for param, value in CONFIG['XGB_PARAMS'].items():
+                f.write(f"  {param}: {value}\n")
+            
+            f.write("\nEnsemble Parameters:\n")
+            f.write("  RF Weight: 0.6\n")  # Default weight for RF model
+            f.write("  XGB Weight: 0.4\n")  # Default weight for XGB model
+            f.write("  Feature Selection: Intersection of RF and XGB features\n")
+            f.write("  Prediction Method: Weighted average of RF and XGB predictions\n")
+
         # Initialize visualizer
         visualizer = PCEVisualizer(execution_logger)
 
@@ -477,6 +501,25 @@ def main():
         )
         rf_model._create_model()  # Initialize the model
         rf_metrics, rf_results = rf_model.train(data)
+
+        # Save RF metrics
+        rf_metrics_path = os.path.join(execution_logger.results_dir, f"RF_metrics_{DFT_METHOD}.txt")
+        with open(rf_metrics_path, 'w') as f:
+            f.write("Random Forest Model Metrics\n")
+            f.write("==========================\n\n")
+            
+            f.write("Training Metrics:\n")
+            for metric, value in rf_metrics['train'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            f.write("\nTest Metrics:\n")
+            for metric, value in rf_metrics['test'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            if 'cv' in rf_metrics:
+                f.write("\nCross-Validation Metrics:\n")
+                for metric, value in rf_metrics['cv'].items():
+                    f.write(f"  {metric}: {value:.4f}\n")
 
         # Prepare and save RF results
         rf_pce_results = prepare_pce_results(rf_results)
@@ -509,19 +552,28 @@ def main():
             test_size=CONFIG['TEST_SIZE'],
             random_state=CONFIG['RANDOM_STATE'],
             cv_folds=CONFIG['CV_FOLDS'],
-            n_estimators=1000,
-            learning_rate=0.03,
-            max_depth=3,
-            min_child_weight=1,
-            subsample=0.7,
-            colsample_bytree=0.7,
-            gamma=0,
-            reg_alpha=0,
-            reg_lambda=0.1,
-            scale_pos_weight=1.0
+            **CONFIG['XGB_PARAMS']
         )
-        xgb_model._create_model()
         xgb_metrics, xgb_results = xgb_model.train(data)
+
+        # Save XGBoost metrics
+        xgb_metrics_path = os.path.join(execution_logger.results_dir, f"XGBoost_metrics_{DFT_METHOD}.txt")
+        with open(xgb_metrics_path, 'w') as f:
+            f.write("XGBoost Model Metrics\n")
+            f.write("=====================\n\n")
+            
+            f.write("Training Metrics:\n")
+            for metric, value in xgb_metrics['train'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            f.write("\nTest Metrics:\n")
+            for metric, value in xgb_metrics['test'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            if 'cv' in xgb_metrics:
+                f.write("\nCross-Validation Metrics:\n")
+                for metric, value in xgb_metrics['cv'].items():
+                    f.write(f"  {metric}: {value:.4f}\n")
 
         # Prepare and save XGBoost results
         xgb_pce_results = prepare_pce_results(xgb_results)
@@ -555,9 +607,28 @@ def main():
             random_state=CONFIG['RANDOM_STATE'],
             cv_folds=CONFIG['CV_FOLDS'],
             rf_params=CONFIG['RF_PARAMS'],
-            xgb_params=CONFIG['XGB_PARAMS']  # Updated to match config key
+            xgb_params=CONFIG['XGB_PARAMS']
         )
         ensemble_metrics, ensemble_results = ensemble_model.train(data)
+
+        # Save Ensemble metrics
+        ensemble_metrics_path = os.path.join(execution_logger.results_dir, f"Ensemble_metrics_{DFT_METHOD}.txt")
+        with open(ensemble_metrics_path, 'w') as f:
+            f.write("Ensemble Model Metrics\n")
+            f.write("=====================\n\n")
+            
+            f.write("Training Metrics:\n")
+            for metric, value in ensemble_metrics['train'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            f.write("\nTest Metrics:\n")
+            for metric, value in ensemble_metrics['test'].items():
+                f.write(f"  {metric}: {value:.4f}\n")
+            
+            if 'cv' in ensemble_metrics:
+                f.write("\nCross-Validation Metrics:\n")
+                for metric, value in ensemble_metrics['cv'].items():
+                    f.write(f"  {metric}: {value:.4f}\n")
 
         # Prepare and save Ensemble results
         ensemble_pce_results = prepare_pce_results(ensemble_results)

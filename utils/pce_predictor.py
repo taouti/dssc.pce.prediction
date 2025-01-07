@@ -357,7 +357,7 @@ class PCEPredictor:
             if not any(self.models.values()):
                 self.load_models()
 
-            # Prepare features
+            # Prepare features with original core features
             data = self.prepare_features()
             
             # Create a results directory if it doesn't exist
@@ -373,8 +373,16 @@ class PCEPredictor:
 
                 logger.info(f"\nMaking predictions with {model_name} model...")
                 try:
+                    # Ensure all required features are present
+                    required_features = model.preprocessor.selected_features
+                    missing_features = [f for f in required_features if f not in data.columns]
+                    
+                    if missing_features:
+                        logger.warning(f"Missing features for {model_name}: {missing_features}")
+                        continue
+
                     # Get features for prediction
-                    features = data[self.core_features]
+                    features = data[required_features]
                     
                     # Make predictions
                     predictions = model.predict(features)
@@ -404,12 +412,10 @@ class PCEPredictor:
                     continue
 
             # Save combined predictions
-            if len(all_predictions.columns) > 1:  # Only save if we have predictions
-                combined_results_path = results_dir / f"PCE_predictions_ALL_MODELS_{self.dft_method}_eth_new_dyes.xlsx"
-                all_predictions.to_excel(combined_results_path, index=False)
-                logger.info(f"Saved combined predictions to: {combined_results_path}")
+            predictions_path = results_dir / f"PCE_predictions_ALL_MODELS_{self.dft_method}_eth_new_dyes.xlsx"
+            all_predictions.to_excel(predictions_path, index=False)
+            logger.info(f"Saved combined predictions to: {predictions_path}")
 
         except Exception as e:
-            logger.error(f"Error making predictions: {str(e)}")
-            logger.error("Full error details:", exc_info=True)
+            logger.error(f"Error during prediction: {str(e)}")
             raise
