@@ -54,47 +54,47 @@ CONFIG = {
     'MODEL_OUTPUT': f'pce_prediction_model_{DFT_METHOD}_eth.joblib',
     
     # Model Parameters
-    'TEST_SIZE': 0.1,
+    'TEST_SIZE': 0.1,  # Keep smaller test size for very small dataset
     'RANDOM_STATE': 42,
-    'CV_FOLDS': 5,
-    
+    'CV_FOLDS': 5,  # Moderate folds for cross-validation
+
     # Random Forest Parameters
     'RF_PARAMS': {
-        'n_estimators': 10000,
-        'max_depth': 10,
-        'min_samples_split': 3,
-        'min_samples_leaf': 2,
-        'max_features': 'sqrt',
-        'max_samples': 0.85,
+        'n_estimators': 5000,  # Moderate ensemble size
+        'max_depth': 10,  # Slightly deeper trees
+        'min_samples_split': 3,  # Keep as is
+        'min_samples_leaf': 2,  # Keep as is
+        'max_features': 'sqrt',  # Standard setting
+        'max_samples': 0.85,  # Restore to avoid overly constraining
         'n_jobs': -1
     },
-    
+
     # XGBoost Parameters
     'XGB_PARAMS': {
-        'n_estimators': 10000,
-        'learning_rate': 0.08,
-        'max_depth': 10,
-        'min_child_weight': 1,
-        'subsample': 0.7,
-        'colsample_bytree': 0.7,
-        'gamma': 0,
-        'reg_alpha': 0,
-        'reg_lambda': 0.1,
-        'scale_pos_weight': 1.0,
+        'n_estimators': 5000,  # Fewer trees for simplicity
+        'learning_rate': 0.05,  # Slower learning rate
+        'max_depth': 10,  # Smaller tree depth
+        'min_child_weight': 1,  # Stricter split conditions
+        'subsample': 0.7,  # Higher subsampling
+        'colsample_bytree': 0.7,  # More features per tree
+        'gamma': 0,  # Slight regularization for splits
+        'reg_alpha': 0,  # Stronger L1 regularization
+        'reg_lambda': 0.1,  # Stronger L2 regularization
+        'scale_pos_weight': 1.0  # Default balance for regression
     },
-    
+
     # Preprocessing Parameters
     'PREPROCESSING': {
         'force_include_features': ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment'],
-        'n_features_to_select': 20,
-        'correlation_threshold': 0.90,
+        'n_features_to_select': 20,  # Restore higher feature count
+        'correlation_threshold': 0.90,  # Moderately strict threshold
         'rf_importance_weight': 0.6,
         'mi_importance_weight': 0.4
     },
-    
+
     # Ensemble Parameters
     'ENSEMBLE': {
-        'weights': [0.05, 0.95]  # RF weight, XGBoost weight
+        'weights': [0.6, 0.4]  # Restore RF's higher contribution
     }
 }
 
@@ -420,7 +420,7 @@ def generate_visualizations(model, model_name: str, output_dir: Path) -> None:
                 visualizer.plot_correlation_heatmap_enhanced(results, model_name)
             
             # Descriptor-PCE relationship plots for key features
-            key_descriptors = ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment']
+            key_descriptors = ['HOMO', 'LUMO', 'Max_Absorption_nm', 'Max_f_osc', 'Dipole_Moment', 'LHE']
             for descriptor in key_descriptors:
                 if descriptor in results.columns:
                     visualizer.plot_descriptor_pce_relationship(results, descriptor, model_name)

@@ -1,0 +1,12 @@
+Random Forest Model Metrics
+==========================
+
+Training Metrics:
+  r2: 0.8268
+  rmse: 0.0075
+  mae: 0.0061
+
+Test Metrics:
+  r2: -0.5429
+  rmse: 0.0138
+  mae: 0.0088
